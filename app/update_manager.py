@@ -25,6 +25,8 @@ GITHUB_DOWNLOAD = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases/dow
 MEVCUT_SURUM = "1.6"
 
 class UpdateManager:
+    MEVCUT_SURUM = MEVCUT_SURUM
+
     def __init__(self):
         self.guncelleme_bilgisi = None
         self.indiriliyor = False
