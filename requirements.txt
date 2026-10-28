@@ -1,0 +1,18 @@
+# Asistan - Gerekli Kütüphaneler
+
+# Telegram Bot
+python-telegram-bot>=20.0
+
+# Excel İşleme
+openpyxl>=3.1.0
+
+# Google Drive API
+google-api-python-client>=2.0.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=1.0.0
+
+# Dosya İzleme
+watchdog>=3.0.0
+
+# Opsiyonel - GUI için ek kütüphaneler
+# pillow>=10.0.0  # Görsel işleme için

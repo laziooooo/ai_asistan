@@ -1,0 +1,43 @@
+# Build
+dist/
+build/
+*.spec
+
+# Data (hassas)
+app/data/
+*.db
+*.db-wal
+*.db-shm
+firebase_user.json
+google_token.json
+totp_qr.png
+
+# Models
+*.gguf
+*.safetensors
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# ZIP
+*.zip
+
+# Geçici
+*.tmp
+*.bak
+
+# Hassas bilgiler
+config.json
+
+# Portable build (cok buyuk)
+portable/
+
+# Test dosyalari
+screenshot_*.py
+test.py
+patch_hesap.py
