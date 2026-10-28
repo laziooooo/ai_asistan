@@ -19,6 +19,7 @@ from .alert_manager import alert_manager
 from .local_ai import local_ai, AI_SEVIYELER
 from .task_manager import task_manager
 from .firebase_auth import firebase_auth
+from .update_manager import update_manager
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ class AsistanGUI:
         self.telegram_running = False
 
         alert_manager.baslat()
+        update_manager.kontrol_dongusu_baslat()
         self._create_widgets()
         self._update_status()
 
@@ -853,6 +855,30 @@ class AsistanGUI:
         tk.Button(totp_btn_frame, text="2FA Kaldir", bg=RED, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._totp_kaldir).pack(side=tk.LEFT, padx=5)
         tk.Label(self.totp_frame, text="Google Authenticator ile dogrulama yapin.", font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W, pady=(5,0))
 
+        # GERI BILDIRIM
+        geri_frame = tk.LabelFrame(sag, text="  Geri Bildirim  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=12)
+        geri_frame.pack(fill=tk.X, pady=(10,10))
+
+        tur_frame = tk.Frame(geri_frame, bg=BG)
+        tur_frame.pack(fill=tk.X, pady=(0,8))
+        tk.Label(tur_frame, text="Tur:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
+        self.geri_tur_var = tk.StringVar(value='hata')
+        tk.Radiobutton(tur_frame, text="Hata", variable=self.geri_tur_var, value='hata',
+                       font=('Segoe UI', 9), bg=BG, fg=RED, selectcolor=BG2).pack(side=tk.LEFT, padx=(10,0))
+        tk.Radiobutton(tur_frame, text="Oneri", variable=self.geri_tur_var, value='oneri',
+                       font=('Segoe UI', 9), bg=BG, fg=GREEN, selectcolor=BG2).pack(side=tk.LEFT, padx=10)
+
+        tk.Label(geri_frame, text="Baslik:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
+        self.geri_baslik_entry = tk.Entry(geri_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT)
+        self.geri_baslik_entry.pack(fill=tk.X, ipady=4, pady=(2,6))
+
+        tk.Label(geri_frame, text="Aciklama:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
+        self.geri_aciklama_text = tk.Text(geri_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, height=4)
+        self.geri_aciklama_text.pack(fill=tk.X, pady=(2,8))
+
+        tk.Button(geri_frame, text="Gonder", bg=CYAN, fg='white', font=('Segoe UI', 10, 'bold'),
+                 relief=tk.FLAT, padx=20, command=self._geri_bildirim_gonder).pack(anchor=tk.W)
+
         # Cikis - sag sutunda
         self.cikis_btn = tk.Button(sag, text="Cikis Yap", bg=RED, fg='white', font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, pady=8, command=self._cikis_yap)
         self.cikis_btn.pack(anchor=tk.W, pady=(5,0))
@@ -965,6 +991,49 @@ class AsistanGUI:
         if messagebox.askyesno("Onay", "2FA kaldirilsin mi?"):
             firebase_auth.totp_kaldir()
             self._refresh_hesap()
+
+    def _geri_bildirim_gonder(self):
+        tur = self.geri_tur_var.get()
+        baslik = self.geri_baslik_entry.get().strip()
+        aciklama = self.geri_aciklama_text.get('1.0', tk.END).strip()
+
+        if not baslik or not aciklama:
+            messagebox.showwarning("Uyari", "Baslik ve aciklama zorunlu!")
+            return
+
+        tur_adi = "HATA" if tur == 'hata' else "ONERI"
+
+        try:
+            import sqlite3
+            from .config import DATA_DIR
+            conn = sqlite3.connect(str(DATA_DIR / 'asistan.db'))
+            ddl = "CREATE TABLE IF NOT EXISTS geri_bildirimler (id INTEGER PRIMARY KEY AUTOINCREMENT, tur TEXT NOT NULL, baslik TEXT NOT NULL, aciklama TEXT NOT NULL, durum TEXT DEFAULT 'Yeni', kullanici TEXT DEFAULT '', olusturma TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            conn.execute(ddl)
+
+            kullanici = ''
+            if firebase_auth.giris_yapildi_mi():
+                kullanici = firebase_auth.kullanici_bilgisi().get('email', '')
+
+            conn.execute('INSERT INTO geri_bildirimler (tur, baslik, aciklama, kullanici) VALUES (?, ?, ?, ?)',
+                        (tur_adi, baslik, aciklama, kullanici))
+            conn.commit()
+            conn.close()
+
+            try:
+                from winotify import Notification, audio
+                n = Notification(app_id="Asistan",
+                    title="Geri Bildirim Alindi (" + tur_adi + ")",
+                    msg=baslik, duration="short")
+                n.set_audio(audio.Default, loop=False)
+                n.show()
+            except: pass
+
+            messagebox.showinfo("Gonderildi", tur_adi + " geri bildiriminiz kaydedildi!")
+            self.geri_baslik_entry.delete(0, tk.END)
+            self.geri_aciklama_text.delete('1.0', tk.END)
+
+        except Exception as e:
+            messagebox.showerror("Hata", str(e))
 
     def _cikis_yap(self):
         firebase_auth.cikis_yap()
@@ -1189,10 +1258,127 @@ class AsistanGUI:
         tk.Label(startup_frame, text="Windows acildiginda Asistan otomatik olarak baslar.",
                  font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W)
 
+        # ─── GUNCELLEME ───
+        update_frame = tk.LabelFrame(form, text="  Guncelleme  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=15)
+        update_frame.pack(fill=tk.X, pady=(0,10))
+
+        surum_row = tk.Frame(update_frame, bg=BG)
+        surum_row.pack(fill=tk.X, pady=(0,5))
+        tk.Label(surum_row, text="Mevcut Surum:", font=('Segoe UI', 10), bg=BG, fg=FG2).pack(side=tk.LEFT)
+        self.guncelleme_surum_label = tk.Label(surum_row, text=f"v{update_manager.MEVCUT_SURUM}", font=('Segoe UI', 10, 'bold'), bg=BG, fg=FG)
+        self.guncelleme_surum_label.pack(side=tk.LEFT, padx=(6,0))
+
+        kontrol_row = tk.Frame(update_frame, bg=BG)
+        kontrol_row.pack(fill=tk.X, pady=(0,5))
+        tk.Label(kontrol_row, text="Son Kontrol:", font=('Segoe UI', 10), bg=BG, fg=FG2).pack(side=tk.LEFT)
+        self.guncelleme_son_label = tk.Label(kontrol_row, text=update_manager.son_kontrol or 'Hicbir zaman', font=('Segoe UI', 10), bg=BG, fg=FG)
+        self.guncelleme_son_label.pack(side=tk.LEFT, padx=(6,0))
+
+        tk.Label(update_frame, text="Her gun sabah 10:00'da otomatik kontrol edilir.", font=('Segoe UI', 9), bg=BG, fg=GREEN).pack(anchor=tk.W, pady=(5,0))
+
+        tk.Label(update_frame, text="Bildirim kanallari:", font=('Segoe UI', 9), bg=BG, fg=FG2).pack(anchor=tk.W, pady=(8,0))
+        bildirim_frame = tk.Frame(update_frame, bg=BG)
+        bildirim_frame.pack(fill=tk.X, pady=(2,8))
+        self.bildirim_telegram = tk.BooleanVar(value=True)
+        self.bildirim_mail = tk.BooleanVar(value=True)
+        self.bildirim_bilgisayar = tk.BooleanVar(value=True)
+        tk.Checkbutton(bildirim_frame, text="Telegram", variable=self.bildirim_telegram, font=('Segoe UI', 9), bg=BG, fg=GREEN, selectcolor=BG2).pack(side=tk.LEFT, padx=(0,8))
+        tk.Checkbutton(bildirim_frame, text="Mail", variable=self.bildirim_mail, font=('Segoe UI', 9), bg=BG, fg=CYAN, selectcolor=BG2).pack(side=tk.LEFT, padx=8)
+        tk.Checkbutton(bildirim_frame, text="Bilgisayar", variable=self.bildirim_bilgisayar, font=('Segoe UI', 9), bg=BG, fg=ACCENT, selectcolor=BG2).pack(side=tk.LEFT, padx=8)
+
+        self.guncelleme_durum_label = tk.Label(update_frame, text="", font=('Segoe UI', 10), bg=BG, fg=FG2)
+        self.guncelleme_durum_label.pack(anchor=tk.W, pady=(5,0))
+
+        self.indirme_progress = ttk.Progressbar(update_frame, length=300, mode='determinate')
+
+        self.indirme_label = tk.Label(update_frame, text="", font=('Segoe UI', 9), bg=BG, fg=FG2)
+
+        guncelleme_btn_frame = tk.Frame(update_frame, bg=BG)
+        guncelleme_btn_frame.pack(fill=tk.X, pady=(10,0))
+
+        tk.Button(guncelleme_btn_frame, text="Guncelleme Kontrol Et", bg=CYAN, fg='white',
+                 font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelleme_kontrol).pack(side=tk.LEFT, padx=(0,5))
+
+        self.indir_btn = tk.Button(guncelleme_btn_frame, text="Indir", bg=ACCENT, fg='white',
+                 font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelleme_indir, state=tk.DISABLED)
+        self.indir_btn.pack(side=tk.LEFT, padx=5)
+
+        self.guncelle_btn = tk.Button(guncelleme_btn_frame, text="Guncelle ve Yeniden Baslat", bg=GREEN, fg='white',
+                 font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelle_ve_baslat, state=tk.DISABLED)
+        self.guncelle_btn.pack(side=tk.LEFT, padx=5)
+
         # Kaydet
         tk.Button(form, text="  AYARLARI KAYDET  ", bg=GREEN, fg='white',
                  font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, pady=10,
                  command=self._save_settings).pack(anchor=tk.W, pady=(10,0))
+
+    def _guncelleme_kontrol(self):
+        self.guncelleme_durum_label.config(text="Kontrol ediliyor...", fg=FG2)
+        self.root.update()
+
+        def kontrol():
+            sonuc = update_manager.guncelleme_kontrol_et()
+            self.root.after(0, lambda: self._guncelleme_kontrol_sonuc(sonuc))
+
+        threading.Thread(target=kontrol, daemon=True).start()
+
+    def _guncelleme_kontrol_sonuc(self, sonuc):
+        self.guncelleme_son_label.config(text=sonuc.get('kontrol_zamani', ''))
+
+        if sonuc.get('hata'):
+            self.guncelleme_durum_label.config(text=f"Hata: {sonuc['hata']}", fg=RED)
+            return
+
+        if sonuc.get('var'):
+            yeni = sonuc.get('yeni_surum', '')
+            self.guncelleme_durum_label.config(
+                text=f"Yeni surum mevcut: v{yeni} (mevcut: v{update_manager.MEVCUT_SURUM})", fg=GREEN)
+            self.indir_btn.config(state=tk.NORMAL)
+            messagebox.showinfo("Guncelleme Var!",
+                f"Yeni surum: v{yeni}\nMevcut: v{update_manager.MEVCUT_SURUM}\n\nIndir butonuna basiniz.")
+        else:
+            self.guncelleme_durum_label.config(text="Guncel - yeni surum yok", fg=GREEN)
+            self.indir_btn.config(state=tk.DISABLED)
+
+    def _guncelleme_indir(self):
+        if not update_manager.guncelleme_bilgisi or not update_manager.guncelleme_bilgisi.get('var'):
+            messagebox.showwarning("Uyari", "Once guncelleme kontrol edin!")
+            return
+
+        self.indir_btn.config(state=tk.DISABLED)
+        self.indirme_progress.pack(anchor=tk.W, pady=(3,0))
+        self.indirme_label.pack(anchor=tk.W)
+        self.indirme_label.config(text="Indiriliyor...", fg=ACCENT)
+        self.indirme_progress['value'] = 0
+        self.root.update()
+
+        def indirme():
+            basarili = update_manager.guncelleme_indir(callback=self._indirme_progress_cb)
+            self.root.after(0, lambda: self._indirme_sonuc(basarili))
+
+        threading.Thread(target=indirme, daemon=True).start()
+
+    def _indirme_progress_cb(self, yuzde, indirilen_mb, toplam_mb):
+        def guncelle():
+            self.indirme_progress['value'] = yuzde
+            self.indirme_label.config(text=f"%{yuzde} ({indirilen_mb}MB / {toplam_mb}MB)", fg=ACCENT)
+        self.root.after(0, guncelle)
+
+    def _indirme_sonuc(self, basarili):
+        if basarili:
+            self.indirme_progress['value'] = 100
+            self.indirme_label.config(text="Indirme tamamlandi!", fg=GREEN)
+            self.guncelle_btn.config(state=tk.NORMAL)
+            messagebox.showinfo("Tamam", "Guncelleme indirildi!\n\n'Guncelle ve Yeniden Baslat' butonuna basiniz.")
+        else:
+            self.indirme_label.config(text="Indirme basarisiz!", fg=RED)
+            self.indir_btn.config(state=tk.NORMAL)
+
+    def _guncelle_ve_baslat(self):
+        if messagebox.askyesno("Guncelleme", "Program guncellenecek ve yeniden baslatilacak.\nDevam edilsin mi?"):
+            basarili = update_manager.guncelle_ve_baslat()
+            if not basarili:
+                messagebox.showerror("Hata", "Guncelleme baslatilamadi!")
 
     def _refresh_ayarlar(self):
         """Ayarlar sayfasi acildiginda secili karti vurgula"""
