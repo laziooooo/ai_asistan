@@ -49,7 +49,7 @@ class AsistanGUI:
     def __init__(self):
         self.root = tk.Tk()
         self._renk_palet_yukle()
-        self.root.title("Asistan v1.6")
+        self.root.title(f"Asistan v{update_manager.MEVCUT_SURUM}")
         self.root.geometry("1280x800")
         self.root.configure(bg=BG)
 
