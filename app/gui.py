@@ -92,8 +92,8 @@ class AsistanGUI:
             (t("menu_sohbet"), CYAN, True),
             (t("menu_kayitlar"), MAGENTA, True),
             ("Form Ayarları", YELLOW, True),
-            ("Uyarilar", RED, True),
-            ("Gorevler", MAGENTA, None),  # None = seviye bagimli
+            ("Uyarılar", RED, True),
+            ("Görevler", MAGENTA, None),  # None = seviye bagimli
             ("Telegram", GREEN, True),
             ("Google Drive", ACCENT, True),
             (t("menu_hesap"), GREEN, True),
@@ -122,7 +122,7 @@ class AsistanGUI:
         self._switch_page(t("menu_sohbet"))
 
     def _build_menu(self):
-        """Menuyu AI seviyesine gore olustur"""
+        """Menüyü AI seviyesine gore oluştur"""
         # Eski butonlari temizle
         for data in self.menu_buttons.values():
             data['widget'].destroy()
@@ -147,7 +147,7 @@ class AsistanGUI:
 
     def _switch_page(self, page_name):
         page_map = {t("menu_sohbet"):"sohbet",t("menu_kayitlar"):"kayitlar","Form Ayarları":"form_ayarlari",
-                    "Uyarilar":"uyarilar","Gorevler":"gorevler","Telegram":"telegram",
+                    "Uyarılar":"uyarilar","Görevler":"gorevler","Telegram":"telegram",
                     "Google Drive":"drive",t("menu_hesap"):"hesap",t("menu_ayarlar"):"ayarlar"}
         page_key = page_map.get(page_name, page_name.lower())
 
@@ -221,7 +221,7 @@ class AsistanGUI:
         tree_frame = tk.Frame(page, bg=BG); tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(10,5))
         columns = ('id','zaman','gonderen','kategori','oncelik','mesaj','durum')
         self.tree = ttk.Treeview(tree_frame, columns=columns, show='headings', height=12)
-        for col, text, width in [('id','ID',45),('zaman','Zaman',120),('gonderen','Gonderen',90),('kategori','Kategori',75),('oncelik','Oncelik',65),('mesaj','Mesaj',280),('durum','Durum',65)]:
+        for col, text, width in [('id','ID',45),('zaman','Zaman',120),('gonderen','Gönderen',90),('kategori','Kategori',75),('oncelik','Öncelik',65),('mesaj','Mesaj',280),('durum','Durum',65)]:
             self.tree.heading(col, text=text); self.tree.column(col, width=width)
         scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
@@ -243,7 +243,7 @@ class AsistanGUI:
             for k in db.tum_kayitlar(limit=500):
                 self.tree.insert('', 'end', values=(k.get('id'), k.get('zaman'), k.get('gonderen'), k.get('kategori'), k.get('oncelik','normal'), k.get('mesaj','')[:80], k.get('durum')))
             stats = db.istatistikler()
-            self.kayit_stats.config(text=f"Toplam: {stats['toplam']} | Bekleyen: {stats['bekleyen']} | Oncelikli: {stats['oncelikli']}")
+            self.kayit_stats.config(text=f"Toplam: {stats['toplam']} | Bekleyen: {stats['bekleyen']} | Öncelikli: {stats['oncelikli']}")
         except Exception as e: logger.error(f"Yenileme: {e}")
 
     def _search_kayitlar(self):
@@ -255,26 +255,26 @@ class AsistanGUI:
 
     def _kayit_sil(self):
         secim = self.tree.selection()
-        if not secim: messagebox.showwarning("Uyarı", "Önce bir kayıt secin!"); return
+        if not secim: messagebox.showwarning("Uyarı", "Önce bir kayıt seçin!"); return
         kayit_id = self.tree.item(secim[0])['values'][0]
-        if messagebox.askyesno("Onay", f"Kayit #{kayit_id} silinecek?"):
+        if messagebox.askyesno("Onay", f"Kayıt #{kayit_id} silinecek?"):
             db.kayit_sil(kayit_id); self._refresh_kayitlar()
 
     def _kayit_duzenle(self):
         secim = self.tree.selection()
-        if not secim: messagebox.showwarning("Uyarı", "Önce bir kayıt secin!"); return
+        if not secim: messagebox.showwarning("Uyarı", "Önce bir kayıt seçin!"); return
         values = self.tree.item(secim[0])['values']
         kayit_id = values[0]
 
         dialog = tk.Toplevel(self.root)
-        dialog.title(f"Kayit #{kayit_id} Duzenle"); dialog.geometry("600x500"); dialog.configure(bg=BG)
+        dialog.title(f"Kayıt #{kayit_id} Düzenle"); dialog.geometry("600x500"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
 
-        tk.Label(dialog, text=f"Kayit #{kayit_id}", font=('Segoe UI', 13, 'bold'), bg=BG, fg=YELLOW).pack(pady=(10,8))
+        tk.Label(dialog, text=f"Kayıt #{kayit_id}", font=('Segoe UI', 13, 'bold'), bg=BG, fg=YELLOW).pack(pady=(10,8))
 
         tk.Label(dialog, text="Kategori:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         kategori_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
@@ -296,7 +296,7 @@ class AsistanGUI:
         tk.Label(dialog, text="Durum:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         durum_var = tk.StringVar(value=values[6])
         df = tk.Frame(dialog, bg=BG); df.pack(fill=tk.X, padx=20, pady=(0,8))
-        for opt in ['Yeni', 'Islandi', 'Tamamlandi']:
+        for opt in ['Yeni', 'İşlendi', 'Tamamlandı']:
             tk.Radiobutton(df, text=opt, variable=durum_var, value=opt, font=('Segoe UI', 9), bg=BG, fg=FG, selectcolor=BG2).pack(side=tk.LEFT, padx=10)
 
         def kaydet():
@@ -316,7 +316,7 @@ class AsistanGUI:
         if not secim: return
         kayit_id = self.tree.item(secim[0])['values'][0]
         mevcut = self.tree.item(secim[0])['values'][6]
-        durumlar = ['Yeni', 'Islandi', 'Tamamlandi']
+        durumlar = ['Yeni', 'İşlendi', 'Tamamlandı']
         yeni = durumlar[(durumlar.index(mevcut) if mevcut in durumlar else 0 + 1) % 3]
         import sqlite3
         conn = sqlite3.connect(str(DATA_DIR / 'asistan.db'))
@@ -327,12 +327,12 @@ class AsistanGUI:
     def _export_excel(self):
         path = exporter.kayitlari_aktar()
         if path:
-            messagebox.showinfo("Tamam", f"Excel'e aktarildi:\n{path}")
+            messagebox.showinfo("Tamam", f"Excel'e aktarıldı:\n{path}")
             try: import os; os.startfile(path)
             except: pass
 
     def _kayit_excel_iceri(self):
-        """Excel'den kayit ice aktar"""
+        """Excel'den kayıt içe aktar"""
         try:
             from tkinter import filedialog
             import openpyxl
@@ -341,8 +341,8 @@ class AsistanGUI:
             return
 
         path = filedialog.askopenfilename(
-            title="Kayitlari ice aktaracak Excel dosyasi secin",
-            filetypes=[("Excel Dosyalari", "*.xlsx *.xls"), ("Tumu", "*.*")]
+            title="Kayıtları içe aktaracak Excel dosyası seçin",
+            filetypes=[("Excel Dosyaları", "*.xlsx *.xls"), ("Tümü", "*.*")]
         )
         if not path:
             return
@@ -355,7 +355,7 @@ class AsistanGUI:
             wb.close()
 
             if len(satirlar) < 2:
-                messagebox.showwarning("Uyari", "Dosyada kayit bulunamadi!")
+                messagebox.showwarning("Uyarı", "Dosyada kayıt bulunamadi!")
                 return
 
             # Baslik satirini atla - kolon sirasi: ID, Zaman, Gonderen, Kategori, Oncelik, Mesaj, Durum
@@ -387,7 +387,7 @@ class AsistanGUI:
 
             self._refresh_kayitlar()
 
-            mesaj = f"{eklenen} kayit ice aktarildi!"
+            mesaj = f"{eklenen} kayıt içe aktarıldı!"
             if hatali:
                 mesaj += f"\n{hatali} satir atlandi."
             messagebox.showinfo("Tamam", mesaj)
@@ -398,7 +398,7 @@ class AsistanGUI:
     def _export_rapor(self):
         path = exporter.rapor_olustur()
         if path:
-            messagebox.showinfo("Tamam", f"Rapor olusturuldu:\n{path}")
+            messagebox.showinfo("Tamam", f"Rapor oluşturuldu:\n{path}")
             try: import os; os.startfile(path)
             except: pass
 
@@ -422,7 +422,7 @@ class AsistanGUI:
         list_frame = tk.Frame(page, bg=BG); list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         columns = ('sira','etiket','ad','tip','zorunlu','esas')
         self.form_tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=10)
-        for col, text, width in [('sira','#',40),('etiket','Etiket',150),('ad','Alan Adi',120),('tip','Tip',100),('zorunlu','Zorunlu',80),('esas','Esas',80)]:
+        for col, text, width in [('sira','#',40),('etiket','Etiket',150),('ad','Alan Adı',120),('tip','Tip',100),('zorunlu','Zorunlu',80),('esas','Esas',80)]:
             self.form_tree.heading(col, text=text); self.form_tree.column(col, width=width)
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.form_tree.yview)
         self.form_tree.configure(yscrollcommand=scrollbar.set)
@@ -438,9 +438,9 @@ class AsistanGUI:
         for item in self.form_tree.get_children(): self.form_tree.delete(item)
         alanlar = form_manager.alanlari_getir()
         for i, alan in enumerate(alanlar, 1):
-            self.form_tree.insert('', 'end', values=(i, alan['etiket'], alan['ad'], TIPLER.get(alan['tip'], alan['tip']), "Evet" if alan['zorunlu'] else "Hayir", "👑" if alan['ad'] == form_manager.esas_alan else ""))
+            self.form_tree.insert('', 'end', values=(i, alan['etiket'], alan['ad'], TIPLER.get(alan['tip'], alan['tip']), "Evet" if alan['zorunlu'] else "Hayır", "👑" if alan['ad'] == form_manager.esas_alan else ""))
         esas = form_manager.esas_alani_getir()
-        self.esas_label.config(text=f"Esas Kayit Basligi: {esas['etiket'] if esas else 'Yok'} ({len(alanlar)} alan)")
+        self.esas_label.config(text=f"Esas Kayıt Basligi: {esas['etiket'] if esas else 'Yok'} ({len(alanlar)} alan)")
 
     def _form_excel_disa(self):
         try:
@@ -448,7 +448,7 @@ class AsistanGUI:
             from openpyxl.styles import Font, PatternFill
             alanlar = form_manager.alanlari_getir()
             wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Form Alanlari"
-            for col, baslik in enumerate(['Sira','Etiket','Alan Adi','Tip','Zorunlu','Esas Baslik'], 1):
+            for col, baslik in enumerate(['Sira','Etiket','Alan Adı','Tip','Zorunlu','Esas Başlık'], 1):
                 cell = ws.cell(row=1, column=col, value=baslik)
                 cell.font = Font(bold=True, color='FFFFFF')
                 cell.fill = PatternFill(start_color='3B82F6', end_color='3B82F6', fill_type='solid')
@@ -457,19 +457,19 @@ class AsistanGUI:
                 ws.cell(row=row_idx, column=2, value=alan['etiket'])
                 ws.cell(row=row_idx, column=3, value=alan['ad'])
                 ws.cell(row=row_idx, column=4, value=TIPLER.get(alan['tip'], alan['tip']))
-                ws.cell(row=row_idx, column=5, value='Evet' if alan['zorunlu'] else 'Hayir')
+                ws.cell(row=row_idx, column=5, value='Evet' if alan['zorunlu'] else 'Hayır')
                 ws.cell(row=row_idx, column=6, value='Evet' if alan['ad'] == form_manager.esas_alan else '')
             for col in ['A','B','C','D','E','F']: ws.column_dimensions[col].width = 18
             path = DATA_DIR / 'form_alanlari.xlsx'
             wb.save(str(path))
-            messagebox.showinfo("Tamam", f"Form alanlari Excel'e aktarildi!")
+            messagebox.showinfo("Tamam", f"Form alanlari Excel'e aktarıldı!")
             try: import os; os.startfile(str(path))
             except: pass
         except Exception as e:
             messagebox.showerror("Hata", f"Excel hatasi: {e}")
 
     def _form_excel_iceri(self):
-        path = filedialog.askopenfilename(title="Excel dosyasi seç", filetypes=[("Excel", "*.xlsx")])
+        path = filedialog.askopenfilename(title="Excel dosyası seç", filetypes=[("Excel", "*.xlsx")])
         if not path: return
         try:
             import openpyxl
@@ -490,7 +490,7 @@ class AsistanGUI:
                 sayac += 1
             form_manager._save()
             self._refresh_form_alanlar()
-            messagebox.showinfo("Tamam", f"{sayac} alan ice aktarildi!")
+            messagebox.showinfo("Tamam", f"{sayac} alan içe aktarıldı!")
         except Exception as e:
             messagebox.showerror("Hata", f"Excel hatasi: {e}")
 
@@ -503,7 +503,7 @@ class AsistanGUI:
         y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text="➕ Yeni Alan", font=('Segoe UI', 13, 'bold'), bg=BG, fg=ACCENT).pack(pady=(10,8))
-        tk.Label(dialog, text="Alan Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text="Alan Adı:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         ad_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4)
         tk.Label(dialog, text="Etiket:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
@@ -554,7 +554,7 @@ class AsistanGUI:
     # ═══════════════════════════════════════════
     def _create_uyarilar_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['uyarilar'] = page
-        self._create_header(page, "Uyarilar (Otomatik)")
+        self._create_header(page, "Uyarılar (Otomatik)")
         info = tk.Frame(page, bg=BG2, padx=15, pady=8, highlightbackground=BORDER, highlightthickness=1)
         info.pack(fill=tk.X, padx=10, pady=5)
         tk.Label(info, text="Her müşteri kaydında tarih alanından otomatik uyarı oluşturulur.", font=('Segoe UI', 9), bg=BG2, fg=FG2).pack(anchor=tk.W)
@@ -568,7 +568,7 @@ class AsistanGUI:
         tk.Label(s1, text="Kaç gün önce uyarı:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
         self.gun_once_entry = tk.Entry(s1, font=('Segoe UI', 10), width=5, bg=BG2, fg=FG, relief=tk.FLAT)
         self.gun_once_entry.pack(side=tk.LEFT, padx=5); self.gun_once_entry.insert(0, alert_manager.ayar_get('gun_once'))
-        tk.Label(s1, text="Yıl sonrasi:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT, padx=(20,0))
+        tk.Label(s1, text="Yıl sonrası:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT, padx=(20,0))
         self.yil_spin = tk.Spinbox(s1, from_=1, to=50, font=('Segoe UI', 10), width=4, relief=tk.FLAT)
         self.yil_spin.pack(side=tk.LEFT, padx=5); self.yil_spin.delete(0, tk.END); self.yil_spin.insert(0, alert_manager.ayar_get('yil_once'))
 
@@ -592,7 +592,7 @@ class AsistanGUI:
         list_frame = tk.Frame(page, bg=BG); list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         columns = ('id','musteri','tarih','aciklama','kanallar','durum')
         self.uyari_tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=8)
-        for col, text, width in [('id','ID',40),('musteri','Musteri',150),('tarih','Tarih',100),('aciklama','Aciklama',200),('kanallar','Kanallar',120),('durum','Durum',80)]:
+        for col, text, width in [('id','ID',40),('musteri','Müşteri',150),('tarih','Tarih',100),('aciklama','Açıklama',200),('kanallar','Kanallar',120),('durum','Durum',80)]:
             self.uyari_tree.heading(col, text=text); self.uyari_tree.column(col, width=width)
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.uyari_tree.yview)
         self.uyari_tree.configure(yscrollcommand=scrollbar.set)
@@ -609,7 +609,7 @@ class AsistanGUI:
             durum = "Gönderildi" if u.get('gonderildi') else "Bekliyor"
             self.uyari_tree.insert('', 'end', values=(u.get('id'), u.get('musteri_ad',''), u.get('uyari_tarihi',''), u.get('aciklama',''), u.get('kanallar',''), durum))
         stats = alert_manager.istatistikler()
-        self.uyari_stats_label.config(text=f"Toplam: {stats['toplam']} | Bekleyen: {stats['bekleyen']} | 7 gun: {stats['yakin']} | 30 gun: {stats.get('otuz_gun',0)} | Gonderilen: {stats['gonderilen']}")
+        self.uyari_stats_label.config(text=f"Toplam: {stats['toplam']} | Bekleyen: {stats['bekleyen']} | 7 gün: {stats['yakin']} | 30 gün: {stats.get('otuz_gun',0)} | Gonderilen: {stats['gonderilen']}")
 
     def _uyari_ayarlari_kaydet(self):
         gun_once = self.gun_once_entry.get().strip()
@@ -622,11 +622,11 @@ class AsistanGUI:
         if self.kanal_mail.get(): kanallar.append('mail')
         if self.kanal_bilgisayar.get(): kanallar.append('bilgisayar')
         alert_manager.ayar_kaydet('kanallar', ','.join(kanallar) if kanallar else 'bilgisayar')
-        messagebox.showinfo("Kaydedildi", "Uyarı ayarlari kaydedildi!")
+        messagebox.showinfo("Kaydedildi", "Uyarı ayarları kaydedildi!")
 
     def _test_uyari(self):
         alert_manager.bildirim_gonder({'id':0,'musteri_ad':'TEST','uyari_tarihi':datetime.now().strftime('%d.%m.%Y'),'aciklama':'Test','kanallar':'bilgisayar'})
-        messagebox.showinfo(t("uyari_test"), "Test uyari gonderildi!")
+        messagebox.showinfo(t("uyari_test"), "Test uyarı gonderildi!")
 
     def _manuel_uyari_ekle(self):
         dialog = tk.Toplevel(self.root)
@@ -672,7 +672,7 @@ class AsistanGUI:
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text="Mail Ayarları", font=('Segoe UI', 13, 'bold'), bg=BG, fg=CYAN).pack(pady=(10,8))
         entries = {}
-        for label_text, anahtar, varsayilan in [("SMTP:",'mail_smtp','smtp.gmail.com'),("Port:",'mail_port','587'),("Gonderen:",'mail_user',''),("Şifre:",'mail_pass',''),("Alici:",'mail_to','')]:
+        for label_text, anahtar, varsayilan in [("SMTP:",'mail_smtp','smtp.gmail.com'),("Port:",'mail_port','587'),("Gönderen:",'mail_user',''),("Şifre:",'mail_pass',''),("Alici:",'mail_to','')]:
             tk.Label(dialog, text=label_text, font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
             entry = tk.Entry(dialog, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, show='*' if 'sifre' in label_text.lower() else '')
             entry.pack(fill=tk.X, padx=20, pady=(0,5), ipady=4)
@@ -680,7 +680,7 @@ class AsistanGUI:
             entries[anahtar] = entry
         def kaydet():
             for a, e in entries.items(): alert_manager.ayar_kaydet(a, e.get().strip())
-            messagebox.showinfo("Kaydedildi", "Mail ayarlari kaydedildi!", parent=dialog); dialog.destroy()
+            messagebox.showinfo("Kaydedildi", "Mail ayarları kaydedildi!", parent=dialog); dialog.destroy()
         tk.Button(dialog, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=kaydet).pack(pady=10)
 
     # ═══════════════════════════════════════════
@@ -688,7 +688,7 @@ class AsistanGUI:
     # ═══════════════════════════════════════════
     def _create_gorevler_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['gorevler'] = page
-        self._create_header(page, "Gorevler")
+        self._create_header(page, "Görevler")
 
         info = tk.Frame(page, bg=BG2, padx=15, pady=8, highlightbackground=BORDER, highlightthickness=1)
         info.pack(fill=tk.X, padx=10, pady=5)
@@ -711,7 +711,7 @@ class AsistanGUI:
         list_frame = tk.Frame(page, bg=BG); list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         columns = ('id','gorev_adi','aciklama','durum','oncelik','olusturma')
         self.gorev_tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=10)
-        for col, text, width in [('id','ID',40),('gorev_adi','Gorev Adi',180),('aciklama','Aciklama',250),('durum','Durum',100),('oncelik','Oncelik',80),('olusturma','Olusturma',120)]:
+        for col, text, width in [('id','ID',40),('gorev_adi','Görev Adı',180),('aciklama','Açıklama',250),('durum','Durum',100),('oncelik','Öncelik',80),('olusturma','Oluşturma',120)]:
             self.gorev_tree.heading(col, text=text); self.gorev_tree.column(col, width=width)
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.gorev_tree.yview)
         self.gorev_tree.configure(yscrollcommand=scrollbar.set)
@@ -768,7 +768,7 @@ class AsistanGUI:
         secim = self.gorev_tree.selection()
         if not secim: return
         gorev_id = self.gorev_tree.item(secim[0])['values'][0]
-        if messagebox.askyesno("Onay", f"Gorev #{gorev_id} silinecek?"):
+        if messagebox.askyesno("Onay", f"Görev #{gorev_id} silinecek?"):
             task_manager.gorev_sil(gorev_id); self._refresh_gorevler()
 
     def _gorev_duzenle(self):
@@ -781,13 +781,13 @@ class AsistanGUI:
         if not gorev: return
 
         dialog = tk.Toplevel(self.root)
-        dialog.title(f"Gorev #{gorev_id}"); dialog.geometry("600x450"); dialog.configure(bg=BG)
+        dialog.title(f"Görev #{gorev_id}"); dialog.geometry("600x450"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
-        tk.Label(dialog, text=f"Gorev #{gorev_id} Duzenle", font=('Segoe UI', 13, 'bold'), bg=BG, fg=YELLOW).pack(pady=(10,8))
+        tk.Label(dialog, text=f"Görev #{gorev_id} Düzenle", font=('Segoe UI', 13, 'bold'), bg=BG, fg=YELLOW).pack(pady=(10,8))
         tk.Label(dialog, text="Görev Adı:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         ad_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4); ad_entry.insert(0, gorev.get('gorev_adi',''))
@@ -800,7 +800,7 @@ class AsistanGUI:
         tk.Label(dialog, text="Durum:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         durum_var = tk.StringVar(value=gorev.get('durum','Bekliyor'))
         df = tk.Frame(dialog, bg=BG); df.pack(fill=tk.X, padx=20, pady=(0,8))
-        for opt in ['Bekliyor', 'Devam Ediyor', 'Tamamlandi', 'Iptal']:
+        for opt in ['Bekliyor', 'Devam Ediyor', 'Tamamlandı', 'İptal']:
             tk.Radiobutton(df, text=opt, variable=durum_var, value=opt, font=('Segoe UI', 9), bg=BG, fg=FG, selectcolor=BG2).pack(side=tk.LEFT, padx=5)
         def kaydet():
             task_manager.gorev_guncelle(gorev_id, gorev_adi=ad_entry.get().strip(), aciklama=aciklama_text.get('1.0', tk.END).strip(), talimat=talimat_text.get('1.0', tk.END).strip(), durum=durum_var.get())
@@ -814,7 +814,7 @@ class AsistanGUI:
         if not secim: return
         gorev_id = self.gorev_tree.item(secim[0])['values'][0]
         mevcut = self.gorev_tree.item(secim[0])['values'][3]
-        durumlar = ['Bekliyor', 'Devam Ediyor', 'Tamamlandi', 'Iptal']
+        durumlar = ['Bekliyor', 'Devam Ediyor', 'Tamamlandı', 'İptal']
         yeni = durumlar[(durumlar.index(mevcut) if mevcut in durumlar else 0 + 1) % len(durumlar)]
         task_manager.gorev_guncelle(gorev_id, durum=yeni); self._refresh_gorevler()
 
@@ -831,7 +831,7 @@ class AsistanGUI:
             from openpyxl.styles import Font, PatternFill
             gorevler = task_manager.tum_gorevler(limit=5000)
             wb = openpyxl.Workbook(); ws = wb.active; ws.title="Görevler"
-            for col, baslik in enumerate(['ID','Gorev Adi','Aciklama','Talimat','Durum','Oncelik','Olusturma'], 1):
+            for col, baslik in enumerate(['ID','Görev Adı','Açıklama','Talimat','Durum','Öncelik','Oluşturma'], 1):
                 cell = ws.cell(row=1, column=col, value=baslik)
                 cell.font = Font(bold=True, color='FFFFFF')
                 cell.fill = PatternFill(start_color='8B5CF6', end_color='8B5CF6', fill_type='solid')
@@ -846,14 +846,14 @@ class AsistanGUI:
             for col in ['A','B','C','D','E','F','G']: ws.column_dimensions[col].width = 20
             path = DATA_DIR / 'gorevler.xlsx'
             wb.save(str(path))
-            messagebox.showinfo("Tamam", f"{len(gorevler)} gorev aktarildi!")
+            messagebox.showinfo("Tamam", f"{len(gorevler)} görev aktarıldı!")
             try: import os; os.startfile(str(path))
             except: pass
         except Exception as e:
             messagebox.showerror("Hata", str(e))
 
     def _gorev_excel_iceri(self):
-        path = filedialog.askopenfilename(title="Excel dosyasi seç", filetypes=[("Excel", "*.xlsx")])
+        path = filedialog.askopenfilename(title="Excel dosyası seç", filetypes=[("Excel", "*.xlsx")])
         if not path: return
         try:
             import openpyxl
@@ -867,7 +867,7 @@ class AsistanGUI:
                     if durum != 'Bekliyor': task_manager.gorev_guncelle(gorev_id, durum=durum)
                     sayac += 1
             self._refresh_gorevler()
-            messagebox.showinfo("Tamam", f"{sayac} gorev ice aktarildi!")
+            messagebox.showinfo("Tamam", f"{sayac} görev içe aktarıldı!")
         except Exception as e:
             messagebox.showerror("Hata", str(e))
 
@@ -955,7 +955,7 @@ class AsistanGUI:
         tk.Button(self.kayit_frame, text=t("hesap_olustur"), bg=MAGENTA, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._hesap_olustur).pack(anchor=tk.W)
 
         # 2FA - sag sutunda
-        self.totp_frame = tk.LabelFrame(sag, text="  Iki Adımlı Doğrulama (2FA)  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=YELLOW, padx=15, pady=12)
+        self.totp_frame = tk.LabelFrame(sag, text="  İki Adımlı Doğrulama (2FA)  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=YELLOW, padx=15, pady=12)
         self.totp_frame.pack(fill=tk.X, pady=(0,10))
         self.totp_durum_label = tk.Label(self.totp_frame, text="Kapalı", font=('Segoe UI', 10, 'bold'), bg=BG, fg=RED)
         self.totp_durum_label.pack(anchor=tk.W)
@@ -1048,12 +1048,12 @@ class AsistanGUI:
             messagebox.showwarning("Uyarı", "Önce Firebase API key ayarlayin!"); return
         import webbrowser
         webbrowser.open(url)
-        messagebox.showinfo("Bilgi", "Tarayicida Google girisi yapin.")
+        messagebox.showinfo("Bilgi", "Tarayıcıda Google girisi yapin.")
 
     def _github_oauth(self):
         import webbrowser
         webbrowser.open(firebase_auth.github_oauth_url("Ov23liYOUR_CLIENT_ID"))
-        messagebox.showinfo("Bilgi", "Tarayicida GitHub girisi yapin.")
+        messagebox.showinfo("Bilgi", "Tarayıcıda GitHub girisi yapin.")
 
     def _totp_aktif_et(self):
         if not firebase_auth.giris_yapildi_mi():
@@ -1063,13 +1063,13 @@ class AsistanGUI:
             messagebox.showerror("Hata", sonuc['error']); return
 
         dialog = tk.Toplevel(self.root)
-        dialog.title("Iki Adimli Dogrulama")
+        dialog.title("İki Adımlı Doğrulama")
         dialog.geometry("500x550")
         dialog.configure(bg=BG)
         dialog.transient(self.root)
         dialog.grab_set()
 
-        tk.Label(dialog, text="Iki Adımlı Doğrulama", font=('Segoe UI', 14, 'bold'), bg=BG, fg=YELLOW).pack(pady=(15,10))
+        tk.Label(dialog, text="İki Adımlı Doğrulama", font=('Segoe UI', 14, 'bold'), bg=BG, fg=YELLOW).pack(pady=(15,10))
         tk.Label(dialog, text="Google Authenticator ile QR kodu okutun:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(pady=(0,10))
 
         try:
@@ -1155,7 +1155,7 @@ class AsistanGUI:
     # ═══════════════════════════════════════════
     def _create_telegram_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['telegram'] = page
-        self._create_header(page, "Telegram Ayarlari")
+        self._create_header(page, "Telegram Ayarları")
         form = tk.Frame(page, bg=BG, padx=30, pady=20); form.pack(fill=tk.BOTH, expand=True)
         tk.Label(form, text="Bot Token", font=('Segoe UI', 11, 'bold'), bg=BG, fg=FG).pack(anchor=tk.W)
         token_frame = tk.Frame(form, bg=BG); token_frame.pack(fill=tk.X, pady=(5,15))
@@ -1189,14 +1189,14 @@ class AsistanGUI:
         baglanti_frame.pack(fill=tk.X, padx=10)
 
         self.drive_baglan_btn = tk.Button(
-            baglanti_frame, text="🔗 Google Drive'a Baglan (Tarayici acilir)",
+            baglanti_frame, text="🔗 Google Drive'a Bağlan (Tarayıcı acilir)",
             bg=ACCENT, fg='white', font=('Segoe UI', 11, 'bold'),
             relief=tk.FLAT, padx=25, pady=10,
             command=self._drive_baglan
         )
         self.drive_baglan_btn.pack(side=tk.LEFT, padx=5)
 
-        tk.Button(baglanti_frame, text="🔌 Baglantiyi Kes",
+        tk.Button(baglanti_frame, text="🔌 Bağlantıyı Kes",
                   bg=RED, fg='white', font=('Segoe UI', 10, 'bold'),
                   relief=tk.FLAT, padx=15, pady=10,
                   command=self._drive_baglanti_kes).pack(side=tk.LEFT, padx=5)
@@ -1206,7 +1206,7 @@ class AsistanGUI:
         ayar_frame.pack(fill=tk.X, padx=10, pady=5)
 
         tk.Label(ayar_frame, text="Otomatik yedekleme su verileri kapsar:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
-        for item in ["SQLite veritabani (asistan.db)", "Config dosyasi (config.json)", "Excel disa aktarimlari (.xlsx)", "Log dosyasi (asistan.log)"]:
+        for item in ["SQLite veritabani (asistan.db)", "Config dosyası (config.json)", "Excel dışa aktarimlari (.xlsx)", "Log dosyası (asistan.log)"]:
             tk.Label(ayar_frame, text=f"  • {item}", font=('Segoe UI', 9), bg=BG, fg=FG2).pack(anchor=tk.W)
 
         self.auto_sync_var = tk.BooleanVar(value=drive_sync.auto_sync)
@@ -1220,11 +1220,11 @@ class AsistanGUI:
 
         btn_frame = tk.Frame(page, bg=BG, pady=15)
         btn_frame.pack(fill=tk.X, padx=10)
-        tk.Button(btn_frame, text="💾 Ayarlari Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._drive_ayar_kaydet).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="💾 Ayarları Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._drive_ayar_kaydet).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="🔄 Simdi Yedekle", bg=ACCENT, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._drive_simdi_yedekle).pack(side=tk.LEFT, padx=5)
 
     def _drive_baglan(self):
-        self.drive_baglan_btn.config(text="⏳ Baglaniyor... Tarayiciyi kontrol edin!", state=tk.DISABLED)
+        self.drive_baglan_btn.config(text="⏳ Bağlanıyor... Tarayıcıyı kontrol edin!", state=tk.DISABLED)
         self.root.update()
 
         def baglan():
@@ -1234,7 +1234,7 @@ class AsistanGUI:
         threading.Thread(target=baglan, daemon=True).start()
 
     def _drive_baglandi(self, basarili):
-        self.drive_baglan_btn.config(text="🔗 Google Drive'a Baglan (Tarayici acilir)", state=tk.NORMAL)
+        self.drive_baglan_btn.config(text="🔗 Google Drive'a Bağlan (Tarayıcı acilir)", state=tk.NORMAL)
         if basarili:
             self._refresh_drive_status()
             drive_sync.baslat()
@@ -1262,11 +1262,11 @@ class AsistanGUI:
         db.ayar_kaydet('drive_sync_interval', str(int(self.interval_spin.get()) * 60))
         drive_sync.auto_sync = self.auto_sync_var.get()
         drive_sync.sync_interval = int(self.interval_spin.get()) * 60
-        messagebox.showinfo("Kaydedildi", "Drive ayarlari kaydedildi!")
+        messagebox.showinfo("Kaydedildi", "Drive ayarları kaydedildi!")
 
     def _drive_simdi_yedekle(self):
         if not drive_sync.is_connected:
-            messagebox.showwarning("Uyari", "Once Drive'a baglanin!"); return
+            messagebox.showwarning("Uyarı", "Önce Drive'a bağlanın!"); return
 
         def yedekle():
             basarili = drive_sync.backup_all()
@@ -1321,7 +1321,7 @@ class AsistanGUI:
 
         self.dil_var = tk.StringVar(value=dil_getir())
 
-        tk.Radiobutton(dil_row, text="Turkce", variable=self.dil_var, value='tr',
+        tk.Radiobutton(dil_row, text="Türkçe", variable=self.dil_var, value='tr',
                        font=('Segoe UI', 11), bg=BG, fg=FG, selectcolor=BG2,
                        command=lambda: self._dil_degistir('tr')).pack(side=tk.LEFT, padx=(0,20))
 
@@ -1378,7 +1378,7 @@ class AsistanGUI:
         self.ai_indirme_label.pack(anchor=tk.W, pady=(8,0))
 
         # AI Adi
-        tk.Label(ai_frame, text="AI Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, pady=(10,3))
+        tk.Label(ai_frame, text="AI Adı:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, pady=(10,3))
         self.ai_name_entry = tk.Entry(ai_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, width=30)
         self.ai_name_entry.pack(anchor=tk.W, ipady=4)
         self.ai_name_entry.insert(0, config.ai_name)
@@ -1490,10 +1490,10 @@ class AsistanGUI:
         if sonuc.get('var'):
             yeni = sonuc.get('yeni_surum', '')
             self.guncelleme_durum_label.config(
-                text=f"Yeni surum mevcut: v{yeni} (mevcut: v{update_manager.MEVCUT_SURUM})", fg=GREEN)
+                text=f"Yeni sürüm mevcut: v{yeni} (mevcut: v{update_manager.MEVCUT_SURUM})", fg=GREEN)
             self.indir_btn.config(state=tk.NORMAL)
-            messagebox.showinfo("Guncelleme Var!",
-                f"Yeni surum: v{yeni}\nMevcut: v{update_manager.MEVCUT_SURUM}\n\nIndir butonuna basiniz.")
+            messagebox.showinfo("Güncelleme Var!",
+                f"Yeni sürüm: v{yeni}\nMevcut: v{update_manager.MEVCUT_SURUM}\n\nIndir butonuna basınız.")
         else:
             self.guncelleme_durum_label.config(text="Güncel - yeni sürüm yok", fg=GREEN)
             self.indir_btn.config(state=tk.DISABLED)
@@ -1527,7 +1527,7 @@ class AsistanGUI:
             self.indirme_progress['value'] = 100
             self.indirme_label.config(text="İndirme tamamlandı!", fg=GREEN)
             self.guncelle_btn.config(state=tk.NORMAL)
-            messagebox.showinfo("Tamam", "Guncelleme indirildi!\n\n'Guncelle ve Yeniden Baslat' butonuna basiniz.")
+            messagebox.showinfo("Tamam", "Güncelleme indirildi!\n\n'Guncelle ve Yeniden Başlat' butonuna basınız.")
         else:
             self.indirme_label.config(text="İndirme başarısız!", fg=RED)
             self.indir_btn.config(state=tk.NORMAL)
@@ -1559,13 +1559,13 @@ class AsistanGUI:
                 kart.config(highlightbackground=BORDER, highlightthickness=2)
 
         if tanim.get('indirme_gerekli') and not local_ai.model_indirilmis_mi(seviye):
-            self.ai_indirme_label.config(text=f"⚠ {tanim['ad']} modeli indirilmemis! 'Indir' butonuna basin.", fg=RED)
+            self.ai_indirme_label.config(text=f"⚠ {tanim['ad']} modeli indirilmemiş! 'İndir' butonuna basın.", fg=RED)
         else:
-            self.ai_indirme_label.config(text=f"✓ {tanim['ad']} hazir.", fg=GREEN)
+            self.ai_indirme_label.config(text=f"✓ {tanim['ad']} hazır.", fg=GREEN)
 
     def _model_indir(self, seviye):
         tanim = AI_SEVIYELER.get(seviye, {})
-        if messagebox.askyesno("Model Indir", f"{tanim['ad']} modeli indirilecek (~{tanim['boyut']}).\nDevam edilsin mi?"):
+        if messagebox.askyesno("Model İndir", f"{tanim['ad']} modeli indirilecek (~{tanim['boyut']}).\nDevam edilsin mi?"):
             self.ai_indirme_label.config(text="İndiriliyor...", fg=YELLOW)
             self.root.update()
 
@@ -1612,7 +1612,7 @@ class AsistanGUI:
 
     def _dil_degistir(self, dil_kodu):
         dil_ayarla(dil_kodu)
-        msg = "Dil degistirildi. Program yeniden baslatilacak." if dil_kodu == 'tr' else "Language changed. Program will restart."
+        msg = "Dil değiştirildi. Program yeniden baslatilacak." if dil_kodu == 'tr' else "Language changed. Program will restart."
         messagebox.showinfo("OK", msg)
         import subprocess
         subprocess.Popen([sys.executable] + sys.argv[1:])
@@ -1703,7 +1703,7 @@ class AsistanGUI:
             pass
 
     def _tema_stil_uygula(self):
-        """Tema rengine gore ttk stilleri, imlec ve okunabilirlik ayarlari"""
+        """Tema rengine gore ttk stilleri, imlec ve okunabilirlik ayarları"""
         # ttk widget'lari: Treeview (kayitlar tablosu), Scrollbar, Progressbar
         try:
             st = ttk.Style(self.root)
@@ -1749,6 +1749,33 @@ class AsistanGUI:
                 pass
         try:
             _imlec(self.root)
+        except Exception:
+            pass
+        try:
+            self._kontrast_yazilar(self.root)
+        except Exception:
+            pass
+
+    def _kontrast_yazilar(self, w):
+        """Yazi rengi arka plana cok yakin ise kontrastli rengi sec"""
+        def _lum(hex_renk):
+            try:
+                h = hex_renk.lstrip('#')
+                if len(h) != 6: return None
+                r, g, b = int(h[0:2],16), int(h[2:4],16), int(h[4:6],16)
+                return (0.299*r + 0.587*g + 0.114*b) / 255.0
+            except Exception:
+                return None
+        try:
+            bg = str(w.cget('bg')); fg = str(w.cget('fg'))
+            lb, lf = _lum(bg), _lum(fg)
+            if lb is not None and lf is not None and abs(lb - lf) < 0.15:
+                w.config(fg=('#f5f5f5' if lb < 0.5 else '#1a1b26'))
+        except Exception:
+            pass
+        try:
+            for ch in w.winfo_children():
+                self._kontrast_yazilar(ch)
         except Exception:
             pass
 
@@ -1799,7 +1826,7 @@ class AsistanGUI:
         if yeni_seviye != local_ai.aktif_seviye:
             local_ai.seviye_ayarla(yeni_seviye)
             if not local_ai.model_indirilmis_mi(yeni_seviye) and yeni_seviye != 'varsayilan':
-                messagebox.showwarning("Uyari", f"{AI_SEVIYELER[yeni_seviye]['ad']} modeli indirilmemis!\nOnce modeli indirin.")
+                messagebox.showwarning("Uyarı", f"{AI_SEVIYELER[yeni_seviye]['ad']} modeli indirilmemiş!\nOnce modeli indirin.")
                 return
 
         config.ai_name = self.ai_name_entry.get().strip()
@@ -1812,7 +1839,7 @@ class AsistanGUI:
         # Menuyu yeniden olustur (gorevler gorunurlugu degisebilir)
         self._build_menu()
 
-        gorev_durumu = "Gorevler menusu acildi" if yeni_seviye in GOREVLER_AKTIF_SEVIYELER else "Gorevler menusu kapali"
+        gorev_durumu = "Görevler menüsü açıldı" if yeni_seviye in GOREVLER_AKTIF_SEVIYELER else "Görevler menüsü kapali"
         messagebox.showinfo("Kaydedildi", f"Ayarlar kaydedildi!\n{gorev_durumu}\nBaslangic: {'Aktif' if autostart_basarili and self.autostart_var.get() else 'Pasif'}")
 
     # ═══════════════════════════════════════════
@@ -1834,7 +1861,7 @@ class AsistanGUI:
         scard.pack(fill=tk.X, padx=15, pady=2)
 
         self.stats_labels = {}
-        for label, key in [("Toplam Kayıt", "kayit"), ("7 Gun Icindeki Uyari", "uyari7"), ("30 Gun Icindeki Uyari", "uyari30"), ("Toplam Uyarı", "uyari_toplam")]:
+        for label, key in [("Toplam Kayıt", "kayit"), ("7 Gün Icindeki Uyarı", "uyari7"), ("30 Gün Icindeki Uyarı", "uyari30"), ("Toplam Uyarı", "uyari_toplam")]:
             row = tk.Frame(scard, bg=BG2); row.pack(fill=tk.X, pady=2)
             tk.Label(row, text=label, font=('Segoe UI', 8), bg=BG2, fg=FG2).pack(side=tk.LEFT)
             val = tk.Label(row, text="0", font=('Segoe UI', 9, 'bold'), bg=BG2, fg=FG); val.pack(side=tk.RIGHT)
@@ -1868,10 +1895,10 @@ class AsistanGUI:
         if not message: return
         self._add_chat_message("user", message)
 
-        if message.lower().startswith('kayit:'):
+        if message.lower().startswith('kayıt:'):
             parts = message.split(':', 2)
             kategori = parts[1].strip() if len(parts) >= 3 else 'Genel'
-            mesaj = parts[2].strip() if len(parts) >= 3 else message.replace('kayit:', '').strip()
+            mesaj = parts[2].strip() if len(parts) >= 3 else message.replace('kayıt:', '').strip()
             analiz = ai.analyze_message(mesaj)
             kayit_id = db.kayit_ekle({'zaman': datetime.now().strftime('%d.%m.%Y %H:%M:%S'), 'gonderen': 'GUI', 'kategori': kategori, 'oncelik': analiz.get('priority', 'normal'), 'mesaj': mesaj, 'anahtar_kelimeler': ','.join(analiz.get('keywords', []))})
             self._add_chat_message("bot", f"Kaydedildi! (ID: {kayit_id})")
@@ -1907,7 +1934,7 @@ class AsistanGUI:
             self.stats_labels["uyari_toplam"].config(text=str(alert_stats['toplam']))
 
             if drive_status['connected']:
-                self.drive_stats_label.config(text=f"Acik - Son yedek: {drive_status['last_sync']}", fg=GREEN)
+                self.drive_stats_label.config(text=f"Açık - Son yedek: {drive_status['last_sync']}", fg=GREEN)
             else:
                 self.drive_stats_label.config(text="Kapalı", fg=RED)
         except: pass

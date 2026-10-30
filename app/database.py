@@ -86,10 +86,23 @@ class Database:
             
             self.conn.commit()
             logger.info("Tablolari olusturuldu")
-            
+
         except Exception as e:
             logger.error(f"Tablo olusturma hatasi: {e}")
             raise
+
+        # Durum degerleri gocu (eski ASCII kayitlar - idempotent)
+        try:
+            _c = self.conn.cursor()
+            for _eski, _yeni in [('Tamamlandi', 'Tamamlandı'), ('Islandi', 'İşlendi'), ('Iptal', 'İptal')]:
+                for _tablo in ('gorevler', 'kayitlar'):
+                    try:
+                        _c.execute(f"UPDATE {_tablo} SET durum=? WHERE durum=?", (_yeni, _eski))
+                    except Exception:
+                        pass
+            self.conn.commit()
+        except Exception:
+            pass
     
     def kayit_ekle(self, kayit: Dict) -> int:
         """Yeni kayit ekle"""

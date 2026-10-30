@@ -95,7 +95,7 @@ class TaskManager:
         toplam = c.fetchone()['toplam']
         c.execute("SELECT COUNT(*) as bekleyen FROM gorevler WHERE durum='Bekliyor'")
         bekleyen = c.fetchone()['bekleyen']
-        c.execute("SELECT COUNT(*) as tamamlanan FROM gorevler WHERE durum='Tamamlandi'")
+        c.execute("SELECT COUNT(*) as tamamlanan FROM gorevler WHERE durum='Tamamlandı'")
         tamamlanan = c.fetchone()['tamamlanan']
         c.execute("SELECT COUNT(*) as devam_eden FROM gorevler WHERE durum='Devam Ediyor'")
         devam_eden = c.fetchone()['devam_eden']
