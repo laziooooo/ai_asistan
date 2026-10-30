@@ -29,12 +29,26 @@ FG = '#1a1b26'; FG2 = '#6b7280'
 ACCENT = '#3b82f6'; GREEN = '#22c55e'; YELLOW = '#f59e0b'
 RED = '#ef4444'; CYAN = '#06b6d4'; MAGENTA = '#8b5cf6'; BORDER = '#e5e7eb'
 
+# Arka plan renk secenekleri (varsayilan: beyaz)
+RENKLER = {
+    'beyaz': '#ffffff',
+    'gri': '#808080',
+    'koyu_gri': '#404040',
+    'siyah': '#1a1a1a',
+    'turkuaz': '#40e0d0',
+    'mavi': '#3b82f6',
+    'sari': '#f59e0b',
+    'turuncu': '#f97316',
+    'kirmizi': '#ef4444',
+}
+
 # AI seviyeleri gorevler menusunu acar mi?
 GOREVLER_AKTIF_SEVIYELER = ['orta', 'iyi']
 
 class AsistanGUI:
     def __init__(self):
         self.root = tk.Tk()
+        self._renk_palet_yukle()
         self.root.title("Asistan v1.6")
         self.root.geometry("1280x800")
         self.root.configure(bg=BG)
@@ -50,6 +64,7 @@ class AsistanGUI:
         except Exception:
             pass
         self.root.minsize(800, 600)
+        self.root.protocol("WM_DELETE_WINDOW", self._pencere_kapat)
         self.telegram_running = False
 
         alert_manager.baslat()
@@ -135,6 +150,10 @@ class AsistanGUI:
                     "Google Drive":"drive",t("menu_hesap"):"hesap",t("menu_ayarlar"):"ayarlar"}
         page_key = page_map.get(page_name, page_name.lower())
 
+        # Kaydedilmemis renk onizlemesi varsa geri al (Ayarlardan cikis)
+        if page_key != 'ayarlar':
+            self._renk_geri_al()
+
         # Gorevler sayfasi kapaliysa Sohbet'e yonlendir
         if page_key == 'gorevler' and local_ai.aktif_seviye not in GOREVLER_AKTIF_SEVIYELER:
             page_key = 'sohbet'
@@ -187,7 +206,8 @@ class AsistanGUI:
         btn_frame = tk.Frame(page, bg=BG2, pady=8, highlightbackground=BORDER, highlightthickness=1)
         btn_frame.pack(fill=tk.X)
         tk.Button(btn_frame, text="Yenile", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._refresh_kayitlar).pack(side=tk.LEFT, padx=8)
-        tk.Button(btn_frame, text="Excel Aktar", bg=ACCENT, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._export_excel).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="Excel Dışa Aktar", bg=ACCENT, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._export_excel).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="Excel İçe Aktar", bg=CYAN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._kayit_excel_iceri).pack(side=tk.LEFT, padx=4)
         tk.Button(btn_frame, text="Rapor", bg=MAGENTA, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._export_rapor).pack(side=tk.LEFT, padx=4)
 
         search_frame = tk.Frame(page, bg=BG2, pady=5, highlightbackground=BORDER, highlightthickness=1)
@@ -234,14 +254,14 @@ class AsistanGUI:
 
     def _kayit_sil(self):
         secim = self.tree.selection()
-        if not secim: messagebox.showwarning("Uyari", "Once bir kayit secin!"); return
+        if not secim: messagebox.showwarning("Uyarı", "Önce bir kayıt secin!"); return
         kayit_id = self.tree.item(secim[0])['values'][0]
         if messagebox.askyesno("Onay", f"Kayit #{kayit_id} silinecek?"):
             db.kayit_sil(kayit_id); self._refresh_kayitlar()
 
     def _kayit_duzenle(self):
         secim = self.tree.selection()
-        if not secim: messagebox.showwarning("Uyari", "Once bir kayit secin!"); return
+        if not secim: messagebox.showwarning("Uyarı", "Önce bir kayıt secin!"); return
         values = self.tree.item(secim[0])['values']
         kayit_id = values[0]
 
@@ -309,6 +329,70 @@ class AsistanGUI:
             messagebox.showinfo("Tamam", f"Excel'e aktarildi:\n{path}")
             try: import os; os.startfile(path)
             except: pass
+
+    def _kayit_excel_iceri(self):
+        """Excel'den kayit ice aktar"""
+        try:
+            from tkinter import filedialog
+            import openpyxl
+        except ImportError:
+            messagebox.showerror("Hata", "openpyxl kutuphanesi yok!")
+            return
+
+        path = filedialog.askopenfilename(
+            title="Kayitlari ice aktaracak Excel dosyasi secin",
+            filetypes=[("Excel Dosyalari", "*.xlsx *.xls"), ("Tumu", "*.*")]
+        )
+        if not path:
+            return
+
+        try:
+            wb = openpyxl.load_workbook(path, read_only=True)
+            ws = wb.active
+
+            satirlar = list(ws.iter_rows(values_only=True))
+            wb.close()
+
+            if len(satirlar) < 2:
+                messagebox.showwarning("Uyari", "Dosyada kayit bulunamadi!")
+                return
+
+            # Baslik satirini atla - kolon sirasi: ID, Zaman, Gonderen, Kategori, Oncelik, Mesaj, Durum
+            eklenen = 0
+            hatali = 0
+            for satir in satirlar[1:]:
+                if not satir or len(satir) < 6:
+                    continue
+                try:
+                    # ID (kolon 0) atlanir - veritabani otomatik verir
+                    zaman = str(satir[1]) if satir[1] else ''
+                    gonderen = str(satir[2]) if satir[2] else ''
+                    kategori = str(satir[3]) if satir[3] else 'Genel'
+                    oncelik = str(satir[4]) if satir[4] else 'normal'
+                    mesaj = str(satir[5]) if satir[5] else ''
+                    durum = str(satir[6]) if len(satir) > 6 and satir[6] else 'Yeni'
+
+                    db.kayit_ekle({
+                        'zaman': zaman,
+                        'gonderen': gonderen,
+                        'kategori': kategori,
+                        'oncelik': oncelik,
+                        'mesaj': mesaj,
+                        'durum': durum
+                    })
+                    eklenen += 1
+                except Exception:
+                    hatali += 1
+
+            self._refresh_kayitlar()
+
+            mesaj = f"{eklenen} kayit ice aktarildi!"
+            if hatali:
+                mesaj += f"\n{hatali} satir atlandi."
+            messagebox.showinfo("Tamam", mesaj)
+
+        except Exception as e:
+            messagebox.showerror("Hata", f"Okunamadi: {e}")
 
     def _export_rapor(self):
         path = exporter.rapor_olustur()
@@ -384,7 +468,7 @@ class AsistanGUI:
             messagebox.showerror("Hata", f"Excel hatasi: {e}")
 
     def _form_excel_iceri(self):
-        path = filedialog.askopenfilename(title="Excel dosyasi sec", filetypes=[("Excel", "*.xlsx")])
+        path = filedialog.askopenfilename(title="Excel dosyasi seç", filetypes=[("Excel", "*.xlsx")])
         if not path: return
         try:
             import openpyxl
@@ -483,7 +567,7 @@ class AsistanGUI:
         tk.Label(s1, text="Kaç gün önce uyarı:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
         self.gun_once_entry = tk.Entry(s1, font=('Segoe UI', 10), width=5, bg=BG2, fg=FG, relief=tk.FLAT)
         self.gun_once_entry.pack(side=tk.LEFT, padx=5); self.gun_once_entry.insert(0, alert_manager.ayar_get('gun_once'))
-        tk.Label(s1, text="Yil sonrasi:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT, padx=(20,0))
+        tk.Label(s1, text="Yıl sonrasi:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT, padx=(20,0))
         self.yil_spin = tk.Spinbox(s1, from_=1, to=50, font=('Segoe UI', 10), width=4, relief=tk.FLAT)
         self.yil_spin.pack(side=tk.LEFT, padx=5); self.yil_spin.delete(0, tk.END); self.yil_spin.insert(0, alert_manager.ayar_get('yil_once'))
 
@@ -537,7 +621,7 @@ class AsistanGUI:
         if self.kanal_mail.get(): kanallar.append('mail')
         if self.kanal_bilgisayar.get(): kanallar.append('bilgisayar')
         alert_manager.ayar_kaydet('kanallar', ','.join(kanallar) if kanallar else 'bilgisayar')
-        messagebox.showinfo("Kaydedildi", "Uyari ayarlari kaydedildi!")
+        messagebox.showinfo("Kaydedildi", "Uyarı ayarlari kaydedildi!")
 
     def _test_uyari(self):
         alert_manager.bildirim_gonder({'id':0,'musteri_ad':'TEST','uyari_tarihi':datetime.now().strftime('%d.%m.%Y'),'aciklama':'Test','kanallar':'bilgisayar'})
@@ -745,7 +829,7 @@ class AsistanGUI:
             import openpyxl
             from openpyxl.styles import Font, PatternFill
             gorevler = task_manager.tum_gorevler(limit=5000)
-            wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Gorevler"
+            wb = openpyxl.Workbook(); ws = wb.active; ws.title="Görevler"
             for col, baslik in enumerate(['ID','Gorev Adi','Aciklama','Talimat','Durum','Oncelik','Olusturma'], 1):
                 cell = ws.cell(row=1, column=col, value=baslik)
                 cell.font = Font(bold=True, color='FFFFFF')
@@ -768,7 +852,7 @@ class AsistanGUI:
             messagebox.showerror("Hata", str(e))
 
     def _gorev_excel_iceri(self):
-        path = filedialog.askopenfilename(title="Excel dosyasi sec", filetypes=[("Excel", "*.xlsx")])
+        path = filedialog.askopenfilename(title="Excel dosyasi seç", filetypes=[("Excel", "*.xlsx")])
         if not path: return
         try:
             import openpyxl
@@ -823,7 +907,7 @@ class AsistanGUI:
         self.firebase_key_entry = None
 
         # GIRIS YAP
-        self.giris_frame = tk.LabelFrame(form, text="  Giris Yap  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=GREEN, padx=15, pady=12)
+        self.giris_frame = tk.LabelFrame(form, text="  Giriş Yap  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=GREEN, padx=15, pady=12)
         self.giris_frame.pack(fill=tk.X, pady=(0,10))
         tk.Label(self.giris_frame, text="E-posta:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W)
         self.giris_email = tk.Entry(self.giris_frame, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
@@ -838,7 +922,7 @@ class AsistanGUI:
         tk.Button(giris_btn_frame, text="GitHub ile", bg='#24292e', fg='white', font=('Segoe UI', 9), relief=tk.FLAT, padx=12, command=self._github_oauth).pack(side=tk.LEFT, padx=2)
 
         # HESAP OLUSTUR
-        self.kayit_frame = tk.LabelFrame(form, text="  Hesap Olustur  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=MAGENTA, padx=15, pady=12)
+        self.kayit_frame = tk.LabelFrame(form, text="  Hesap Oluştur  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=MAGENTA, padx=15, pady=12)
         self.kayit_frame.pack(fill=tk.X, pady=(0,10))
 
         sutun1 = tk.Frame(self.kayit_frame, bg=BG)
@@ -870,7 +954,7 @@ class AsistanGUI:
         tk.Button(self.kayit_frame, text=t("hesap_olustur"), bg=MAGENTA, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._hesap_olustur).pack(anchor=tk.W)
 
         # 2FA - sag sutunda
-        self.totp_frame = tk.LabelFrame(sag, text="  Iki Adimli Dogrulama (2FA)  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=YELLOW, padx=15, pady=12)
+        self.totp_frame = tk.LabelFrame(sag, text="  Iki Adımlı Doğrulama (2FA)  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=YELLOW, padx=15, pady=12)
         self.totp_frame.pack(fill=tk.X, pady=(0,10))
         self.totp_durum_label = tk.Label(self.totp_frame, text="Kapalı", font=('Segoe UI', 10, 'bold'), bg=BG, fg=RED)
         self.totp_durum_label.pack(anchor=tk.W)
@@ -918,7 +1002,7 @@ class AsistanGUI:
             self.kayit_frame.pack_forget()
         else:
             self.hesap_durum_label.config(text="Giriş yapılmadı", fg=RED)
-            self.hesap_bilgi_label.config(text="Hesap olusturun veya giris yapin")
+            self.hesap_bilgi_label.config(text="Hesap oluşturun veya giriş yapin")
             self.giris_frame.pack(fill=tk.X, pady=(0,10))
             self.kayit_frame.pack(fill=tk.X, pady=(0,10))
 
@@ -932,10 +1016,10 @@ class AsistanGUI:
         email = self.giris_email.get().strip()
         sifre = self.giris_sifre.get().strip()
         if not email or not sifre:
-            messagebox.showerror("Hata", "E-posta ve sifre girin!"); return
+            messagebox.showerror("Hata", "E-posta ve şifre girin!"); return
         sonuc = firebase_auth.giris_yap(email, sifre)
         if sonuc['success']:
-            messagebox.showinfo("Başarılı", "Giris yapildi!")
+            messagebox.showinfo("Başarılı", "Giriş yapıldı!")
             self._refresh_hesap()
         else:
             messagebox.showerror("Hata", sonuc['error'])
@@ -946,13 +1030,13 @@ class AsistanGUI:
         email = self.kayit_email.get().strip()
         sifre = self.kayit_sifre.get().strip()
         if not all([ad, soyad, email, sifre]):
-            messagebox.showerror("Hata", "Ad, Soyad, E-posta ve Sifre zorunlu!"); return
+            messagebox.showerror("Hata", "Ad, Soyad, E-posta ve Şifre zorunlu!"); return
         if len(sifre) < 6:
-            messagebox.showerror("Hata", "Sifre en az 6 karakter olmali!"); return
+            messagebox.showerror("Hata", "Şifre en az 6 karakter olmali!"); return
         sonuc = firebase_auth.kayit_ol(email, sifre, ad, soyad,
                                        self.kayit_dogum.get().strip(), self.kayit_telefon.get().strip())
         if sonuc['success']:
-            messagebox.showinfo("Başarılı", "Hesap olusturuldu! E-posta dogrulama gonderildi.")
+            messagebox.showinfo("Başarılı", "Hesap oluşturuldu! E-posta dogrulama gonderildi.")
             self._refresh_hesap()
         else:
             messagebox.showerror("Hata", sonuc['error'])
@@ -960,7 +1044,7 @@ class AsistanGUI:
     def _google_oauth(self):
         url = firebase_auth.google_oauth_url()
         if not url:
-            messagebox.showwarning("Uyari", "Once Firebase API key ayarlayin!"); return
+            messagebox.showwarning("Uyarı", "Önce Firebase API key ayarlayin!"); return
         import webbrowser
         webbrowser.open(url)
         messagebox.showinfo("Bilgi", "Tarayicida Google girisi yapin.")
@@ -972,7 +1056,7 @@ class AsistanGUI:
 
     def _totp_aktif_et(self):
         if not firebase_auth.giris_yapildi_mi():
-            messagebox.showwarning("Uyari", "Once giris yapin!"); return
+            messagebox.showwarning("Uyarı", "Önce giriş yapin!"); return
         sonuc = firebase_auth.totp_olustur()
         if not sonuc['success']:
             messagebox.showerror("Hata", sonuc['error']); return
@@ -984,7 +1068,7 @@ class AsistanGUI:
         dialog.transient(self.root)
         dialog.grab_set()
 
-        tk.Label(dialog, text="Iki Adimli Dogrulama", font=('Segoe UI', 14, 'bold'), bg=BG, fg=YELLOW).pack(pady=(15,10))
+        tk.Label(dialog, text="Iki Adımlı Doğrulama", font=('Segoe UI', 14, 'bold'), bg=BG, fg=YELLOW).pack(pady=(15,10))
         tk.Label(dialog, text="Google Authenticator ile QR kodu okutun:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(pady=(0,10))
 
         try:
@@ -998,7 +1082,7 @@ class AsistanGUI:
             tk.Label(dialog, text=f"Gizli Anahtar: {sonuc['secret']}", font=('Courier', 11), bg=BG2, fg=FG, padx=15, pady=15, wraplength=350).pack(pady=10)
 
         tk.Label(dialog, text=f"Manuel anahtar: {sonuc['secret']}", font=('Segoe UI', 9), bg=BG, fg=FG2, wraplength=350).pack(pady=(10,5))
-        tk.Label(dialog, text="Dogrulama kodu:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=30)
+        tk.Label(dialog, text="Doğrulama kodu:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=30)
         kod_entry = tk.Entry(dialog, font=('Segoe UI', 14), bg=BG2, fg=FG, relief=tk.FLAT, justify='center')
         kod_entry.pack(fill=tk.X, padx=30, pady=(3,10), ipady=5)
 
@@ -1023,7 +1107,7 @@ class AsistanGUI:
         aciklama = self.geri_aciklama_text.get('1.0', tk.END).strip()
 
         if not baslik or not aciklama:
-            messagebox.showwarning("Uyari", "Baslik ve aciklama zorunlu!")
+            messagebox.showwarning("Uyarı", "Başlık ve açıklama zorunlu!")
             return
 
         tur_adi = "HATA" if tur == 'hata' else "ONERI"
@@ -1063,7 +1147,7 @@ class AsistanGUI:
     def _cikis_yap(self):
         firebase_auth.cikis_yap()
         self._refresh_hesap()
-        messagebox.showinfo("Tamam", "Cikis yapildi.")
+        messagebox.showinfo("Tamam", "Çıkış yapıldı.")
 
     # ═══════════════════════════════════════════
     # TELEGRAM
@@ -1091,7 +1175,7 @@ class AsistanGUI:
         self._create_header(page, "Google Drive Otomatik Yedekleme")
 
         # Durum
-        durum_frame = tk.LabelFrame(page, text="  Baglanti Durumu  ", font=('Segoe UI', 10, 'bold'), bg=BG, fg=ACCENT, padx=15, pady=10)
+        durum_frame = tk.LabelFrame(page, text="  Bağlantı Durumu  ", font=('Segoe UI', 10, 'bold'), bg=BG, fg=ACCENT, padx=15, pady=10)
         durum_frame.pack(fill=tk.X, padx=10, pady=5)
 
         self.drive_durum_label = tk.Label(durum_frame, text="Bağlı değil", font=('Segoe UI', 11, 'bold'), bg=BG, fg=RED)
@@ -1155,7 +1239,7 @@ class AsistanGUI:
             drive_sync.baslat()
             messagebox.showinfo("Baglandi", "Google Drive'a baglandi!\nOtomatik yedekleme baslatildi.")
         else:
-            messagebox.showerror("Hata", "Baglanti basarisiz!\nInternet baglantinizi kontrol edin.")
+            messagebox.showerror("Hata", "Bağlantı başarısız!\nInternet baglantinizi kontrol edin.")
 
     def _drive_baglanti_kes(self):
         drive_sync.is_connected = False
@@ -1166,7 +1250,7 @@ class AsistanGUI:
     def _refresh_drive_status(self):
         status = drive_sync.get_status()
         if status['connected']:
-            self.drive_durum_label.config(text="Bagli ✓", fg=GREEN)
+            self.drive_durum_label.config(text="Bağlı ✓", fg=GREEN)
         else:
             self.drive_durum_label.config(text="Bağlı değil", fg=RED)
         self.drive_son_yedek.config(text=f"Son yedekleme: {status['last_sync']}")
@@ -1194,7 +1278,7 @@ class AsistanGUI:
             messagebox.showinfo("Tamam", "Yedekleme tamamlandi!")
             self._refresh_drive_status()
         else:
-            messagebox.showerror("Hata", "Yedekleme basarisiz!")
+            messagebox.showerror("Hata", "Yedekleme başarısız!")
 
     # ═══════════════════════════════════════════
     # AYARLAR
@@ -1280,9 +1364,9 @@ class AsistanGUI:
             # Indirme durumu
             if tanim.get('indirme_gerekli'):
                 if local_ai.model_indirilmis_mi(seviye_key):
-                    tk.Label(kart, text="✅ Indirildi", font=('Segoe UI', 8, 'bold'), bg=BG2, fg=GREEN).pack(anchor=tk.W, pady=(3,0))
+                    tk.Label(kart, text="✅ İndirildi", font=('Segoe UI', 8, 'bold'), bg=BG2, fg=GREEN).pack(anchor=tk.W, pady=(3,0))
                 else:
-                    tk.Button(kart, text="⬇ Indir", font=('Segoe UI', 8), bg=ACCENT, fg='white',
+                    tk.Button(kart, text="⬇ İndir", font=('Segoe UI', 8), bg=ACCENT, fg='white',
                              relief=tk.FLAT, padx=8, command=lambda k=seviye_key: self._model_indir(k)).pack(anchor=tk.W, pady=(3,0))
             else:
                 tk.Label(kart, text="Hazır", font=('Segoe UI', 8), bg=BG2, fg=GREEN).pack(anchor=tk.W, pady=(3,0))
@@ -1302,7 +1386,7 @@ class AsistanGUI:
         tk.Checkbutton(ai_frame, text="Otomatik Yanit", variable=self.auto_respond_var, font=('Segoe UI', 10), bg=BG, fg=FG, selectcolor=BG2).pack(anchor=tk.W, pady=(5,0))
 
         # ─── BASLANGICTA CALISTIR (sag kolonda) ───
-        startup_frame = tk.LabelFrame(sag, text="  Baslangic  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=GREEN, padx=15, pady=15)
+        startup_frame = tk.LabelFrame(sag, text="  Başlangıç  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=GREEN, padx=15, pady=15)
         startup_frame.pack(fill=tk.X, pady=(0,10))
 
         self.autostart_var = tk.BooleanVar(value=self._autostart_durumu())
@@ -1311,8 +1395,26 @@ class AsistanGUI:
         tk.Label(startup_frame, text="Windows acildiginda Asistan otomatik olarak baslar.",
                  font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W)
 
+        # ─── ARKA PLAN RENGI (sag kolonda, Baslangic altinda) ───
+        renk_frame = tk.LabelFrame(sag, text="  Arka Plan Rengi  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=ACCENT, padx=15, pady=10)
+        renk_frame.pack(fill=tk.X, pady=(0,10))
+
+        renk_row = tk.Frame(renk_frame, bg=BG)
+        renk_row.pack(anchor=tk.W)
+
+        self._renk_kutulari = {}
+        for _anahtar, _hex in RENKLER.items():
+            _secili = (_anahtar == getattr(self, '_renk_aktif_anahtar', 'beyaz'))
+            _kutu = tk.Frame(renk_row, bg=_hex, width=26, height=26,
+                             highlightthickness=3 if _secili else 2,
+                             highlightbackground=self._ters_renk(_hex), cursor='hand2')
+            _kutu.pack(side=tk.LEFT, padx=5, pady=5)
+            _kutu.pack_propagate(False)
+            _kutu.bind('<Button-1>', lambda e, k=_anahtar: self._renk_sec(k))
+            self._renk_kutulari[_anahtar] = _kutu
+
         # ─── GUNCELLEME (sol kolonda, AI altinda) ───
-        update_frame = tk.LabelFrame(sol, text="  Guncelleme  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=15)
+        update_frame = tk.LabelFrame(sol, text="  Güncelleme  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=15)
         update_frame.pack(fill=tk.X, pady=(0,10))
 
         surum_row = tk.Frame(update_frame, bg=BG)
@@ -1395,7 +1497,7 @@ class AsistanGUI:
 
     def _guncelleme_indir(self):
         if not update_manager.guncelleme_bilgisi or not update_manager.guncelleme_bilgisi.get('var'):
-            messagebox.showwarning("Uyari", "Once guncelleme kontrol edin!")
+            messagebox.showwarning("Uyarı", "Önce güncelleme kontrol edin!")
             return
 
         self.indir_btn.config(state=tk.DISABLED)
@@ -1428,10 +1530,10 @@ class AsistanGUI:
             self.indir_btn.config(state=tk.NORMAL)
 
     def _guncelle_ve_baslat(self):
-        if messagebox.askyesno("Guncelleme", "Program guncellenecek ve yeniden baslatilacak.\nDevam edilsin mi?"):
+        if messagebox.askyesno("Güncelleme", "Program guncellenecek ve yeniden baslatilacak.\nDevam edilsin mi?"):
             basarili = update_manager.guncelle_ve_baslat()
             if not basarili:
-                messagebox.showerror("Hata", "Guncelleme baslatilamadi!")
+                messagebox.showerror("Hata", "Güncelleme baslatilamadi!")
 
     def _refresh_ayarlar(self):
         """Ayarlar sayfasi acildiginda secili karti vurgula"""
@@ -1479,7 +1581,7 @@ class AsistanGUI:
             self.ai_indirme_label.config(text=f"✅ {AI_SEVIYELER[seviye]['ad']} indirildi!", fg=GREEN)
             self._refresh_ayarlar()
         else:
-            self.ai_indirme_label.config(text="❌ Indirme basarisiz!", fg=RED)
+            self.ai_indirme_label.config(text="❌ İndirme başarısız!", fg=RED)
 
     def _autostart_durumu(self) -> bool:
         try:
@@ -1513,6 +1615,128 @@ class AsistanGUI:
         subprocess.Popen([sys.executable] + sys.argv[1:])
         self.root.after(500, self.root.destroy)
 
+    # ═══════════════════════════════════════════
+    # ARKA PLAN RENK SECICI
+    # ═══════════════════════════════════════════
+    @staticmethod
+    def _ters_renk(hex_renk):
+        """Rengin RGB tersi - cerceve gorunurlugu icin"""
+        r, g, b = int(hex_renk[1:3], 16), int(hex_renk[3:5], 16), int(hex_renk[5:7], 16)
+        return f'#{255-r:02x}{255-g:02x}{255-b:02x}'
+
+    def _palet_hesapla(self, hex_renk):
+        """Renkten tam palet uret (BG/BG2/BG3/FG/FG2/BORDER)"""
+        r, g, b = int(hex_renk[1:3], 16), int(hex_renk[3:5], 16), int(hex_renk[5:7], 16)
+        lum = (0.299*r + 0.587*g + 0.114*b) / 255.0
+        koyu = lum < 0.5
+
+        if hex_renk.lower() == '#ffffff':
+            return {'BG': '#ffffff', 'BG2': '#f8f9fc', 'BG3': '#e8eaf6',
+                    'FG': '#1a1b26', 'FG2': '#6b7280', 'BORDER': '#e5e7eb'}
+
+        def blend(oran):
+            adim = 255 if koyu else 0
+            nr = int(r + (adim - r) * oran)
+            ng = int(g + (adim - g) * oran)
+            nb = int(b + (adim - b) * oran)
+            return f'#{nr:02x}{ng:02x}{nb:02x}'
+
+        return {
+            'BG': hex_renk,
+            'BG2': blend(0.07),
+            'BG3': blend(0.16),
+            'FG': '#f5f5f5' if koyu else '#1a1b26',
+            'FG2': '#b8bcc4' if koyu else '#6b7280',
+            'BORDER': '#5a5d63' if koyu else '#d5d8de',
+        }
+
+    def _renk_palet_yukle(self):
+        """Kayitli arka plan rengini yukle (varsayilan: beyaz)"""
+        global BG, BG2, BG3, FG, FG2, BORDER
+        try:
+            from .database import db
+            anahtar = db.ayar_get('arka_plan_renk', 'beyaz')
+        except Exception:
+            anahtar = 'beyaz'
+        if anahtar not in RENKLER:
+            anahtar = 'beyaz'
+        palet = self._palet_hesapla(RENKLER[anahtar])
+        BG = palet['BG']; BG2 = palet['BG2']; BG3 = palet['BG3']
+        FG = palet['FG']; FG2 = palet['FG2']; BORDER = palet['BORDER']
+        self._renk_aktif_anahtar = anahtar
+        self._renk_aktif_palet = dict(palet)
+        self._renk_orjinal_palet = dict(palet)
+        self._renk_orjinal_anahtar = anahtar
+        self._renk_onizleme = False
+        self._renk_kutulari = {}
+
+    def _renk_palet_uygula(self, yeni_palet):
+        """Paleti global'lere ve tum widget'lara anlik uygula"""
+        global BG, BG2, BG3, FG, FG2, BORDER
+        eski = self._renk_aktif_palet
+        eslesme = {eski[k]: yeni_palet[k] for k in eski if eski[k] != yeni_palet[k]}
+        BG = yeni_palet['BG']; BG2 = yeni_palet['BG2']; BG3 = yeni_palet['BG3']
+        FG = yeni_palet['FG']; FG2 = yeni_palet['FG2']; BORDER = yeni_palet['BORDER']
+        self._renk_aktif_palet = dict(yeni_palet)
+        if eslesme:
+            self._widget_renk_yaz(self.root, eslesme)
+
+    def _widget_renk_yaz(self, w, eslesme):
+        for opt in ('bg', 'fg', 'highlightbackground', 'highlightcolor'):
+            try:
+                d = w.cget(opt)
+                if d in eslesme:
+                    w.config(**{opt: eslesme[d]})
+            except Exception:
+                pass
+        try:
+            for child in w.winfo_children():
+                self._widget_renk_yaz(child, eslesme)
+        except Exception:
+            pass
+
+    def _renk_sec(self, anahtar):
+        """Renk kutusuna tikla - anlik onizleme (kaydedilene kadar gecici)"""
+        self._renk_palet_uygula(self._palet_hesapla(RENKLER[anahtar]))
+        self._renk_aktif_anahtar = anahtar
+        self._renk_onizleme = True
+        for k, kutu in self._renk_kutulari.items():
+            try:
+                kutu.config(highlightthickness=3 if k == anahtar else 2)
+            except Exception:
+                pass
+
+    def _renk_geri_al(self):
+        """Kaydedilmemis renk onizlemesini eski haline getir"""
+        if not getattr(self, '_renk_onizleme', False):
+            return
+        self._renk_palet_uygula(self._renk_orjinal_palet)
+        self._renk_aktif_anahtar = self._renk_orjinal_anahtar
+        self._renk_onizleme = False
+        for k, kutu in self._renk_kutulari.items():
+            try:
+                kutu.config(highlightthickness=3 if k == self._renk_orjinal_anahtar else 2)
+            except Exception:
+                pass
+
+    def _renk_kaydet(self):
+        """Onizlenen rengi kalici olarak kaydet"""
+        if not getattr(self, '_renk_onizleme', False):
+            return
+        try:
+            from .database import db
+            db.ayar_kaydet('arka_plan_renk', self._renk_aktif_anahtar)
+        except Exception:
+            pass
+        self._renk_orjinal_palet = dict(self._renk_aktif_palet)
+        self._renk_orjinal_anahtar = self._renk_aktif_anahtar
+        self._renk_onizleme = False
+
+    def _pencere_kapat(self):
+        """Kapatmadan once kaydedilmemis renk onizlemesini geri al"""
+        self._renk_geri_al()
+        self.root.destroy()
+
     def _save_settings(self):
         yeni_seviye = self.ai_seviye_var.get()
         if yeni_seviye != local_ai.aktif_seviye:
@@ -1524,6 +1748,7 @@ class AsistanGUI:
         config.ai_name = self.ai_name_entry.get().strip()
         config.auto_respond = self.auto_respond_var.get()
         config.save()
+        self._renk_kaydet()
 
         autostart_basarili = self._autostart_ayarla(self.autostart_var.get())
 

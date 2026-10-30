@@ -22,7 +22,7 @@ class ExcelExporter:
     """SQLite verisini Excel'e aktar"""
     
     def __init__(self):
-        self.headers = ['ID', 'Zaman', 'Gonderen', 'Kategori', 'Oncelik', 'Mesaj', 'Durum']
+        self.headers = ['ID', 'Zaman', 'Gönderen', 'Kategori', 'Öncelik', 'Mesaj', 'Durum']
         self.header_colors = {
             'ID': '3B82F6',
             'Zaman': '22C55E',
