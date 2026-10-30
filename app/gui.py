@@ -1311,8 +1311,8 @@ class AsistanGUI:
         tk.Label(startup_frame, text="Windows acildiginda Asistan otomatik olarak baslar.",
                  font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W)
 
-        # ─── GUNCELLEME (sag kolonda) ───
-        update_frame = tk.LabelFrame(sag, text="  Guncelleme  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=15)
+        # ─── GUNCELLEME (sol kolonda, AI altinda) ───
+        update_frame = tk.LabelFrame(sol, text="  Guncelleme  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=15)
         update_frame.pack(fill=tk.X, pady=(0,10))
 
         surum_row = tk.Frame(update_frame, bg=BG)
