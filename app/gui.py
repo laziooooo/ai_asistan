@@ -36,10 +36,10 @@ RENKLER = {
     'koyu_gri': '#404040',
     'siyah': '#1a1a1a',
     'turkuaz': '#40e0d0',
-    'mavi': '#3b82f6',
-    'sari': '#f59e0b',
+    'mavi': '#2563eb',    # ACCENT(#3b82f6) ile cakismasin
+    'sari': '#eab308',    # YELLOW(#f59e0b) ile cakismasin
     'turuncu': '#f97316',
-    'kirmizi': '#ef4444',
+    'kirmizi': '#dc2626', # RED(#ef4444) ile cakismasin
 }
 
 # AI seviyeleri gorevler menusunu acar mi?
@@ -1677,7 +1677,9 @@ class AsistanGUI:
         """Paleti global'lere ve tum widget'lara anlik uygula"""
         global BG, BG2, BG3, FG, FG2, BORDER
         eski = self._renk_aktif_palet
-        eslesme = {eski[k]: yeni_palet[k] for k in eski if eski[k] != yeni_palet[k]}
+        sabitler = {ACCENT, GREEN, YELLOW, RED, CYAN, MAGENTA}
+        eslesme = {eski[k]: yeni_palet[k] for k in eski
+                   if eski[k] != yeni_palet[k] and eski[k] not in sabitler}
         BG = yeni_palet['BG']; BG2 = yeni_palet['BG2']; BG3 = yeni_palet['BG3']
         FG = yeni_palet['FG']; FG2 = yeni_palet['FG2']; BORDER = yeni_palet['BORDER']
         self._renk_aktif_palet = dict(yeni_palet)
@@ -1769,7 +1771,7 @@ class AsistanGUI:
         try:
             bg = str(w.cget('bg')); fg = str(w.cget('fg'))
             lb, lf = _lum(bg), _lum(fg)
-            if lb is not None and lf is not None and abs(lb - lf) < 0.15:
+            if lb is not None and lf is not None and abs(lb - lf) < 0.45:
                 w.config(fg=('#f5f5f5' if lb < 0.5 else '#1a1b26'))
         except Exception:
             pass
