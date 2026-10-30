@@ -22,7 +22,7 @@ GITHUB_API = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/release
 GITHUB_DOWNLOAD = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases/download"
 
 # Mevcut surum
-MEVCUT_SURUM = "1.6"
+MEVCUT_SURUM = "1.6.2"
 
 class UpdateManager:
     MEVCUT_SURUM = MEVCUT_SURUM
@@ -175,36 +175,67 @@ class UpdateManager:
             # Indirilen zip'i ac
             import zipfile
             gecici_klasor = DATA_DIR / 'guncelleme_temp'
-            gecici_klasor.mkdir(exist_ok=True)
+            if gecici_klasor.exists():
+                import shutil as _shutil
+                _shutil.rmtree(str(gecici_klasor), ignore_errors=True)
+            gecici_klasor.mkdir(parents=True, exist_ok=True)
 
             with zipfile.ZipFile(self.indirilen_dosya, 'r') as z:
                 z.extractall(str(gecici_klasor))
 
-            # Yeni dosyalari kopyala (mevcut dosyalarin ustune)
-            # EXE calisirken dosyalari degistiremeyiz - batch script olustur
-            batch_icerik = f'''@echo off
-timeout /t 2 /nobreak >nul
-xcopy /E /Y /I "{gecici_klasor}\\*" "{os.path.dirname(sys.executable)}\\"
-del "{self.indirilen_dosya}"
-rmdir /S /Q "{gecici_klasor}"
-start "" "{sys.executable}"
-'''
+            # Zip icinde tek ust klasor var mi kontrol et (ornek: Asistan/)
+            icerik = [p for p in gecici_klasor.iterdir()]
+            if len(icerik) == 1 and icerik[0].is_dir():
+                kaynak_klasor = icerik[0]  # Asistan/
+            else:
+                kaynak_klasor = gecici_klasor
+
+            # Hedef klasor = EXE'nin bulundugu klasor
+            if getattr(sys, 'frozen', False):
+                hedef_klasor = os.path.dirname(sys.executable)
+            else:
+                hedef_klasor = os.path.dirname(os.path.abspath(__file__))
+
+            # Klasor yollarini tam yol yap (batch icin)
+            kaynak_yol = str(kaynak_klasor)
+            hedef_yol = str(hedef_klasor)
+            exe_yol = sys.executable if getattr(sys, 'frozen', False) else sys.executable
+
+            # Batch script - once program kapanmasini bekle, sonra kopyala
+            batch_icerik = (
+                "@echo off\r\n"
+                "rem Asistan guncelleme baslatildi\r\n"
+                "timeout /t 3 /nobreak >nul\r\n"
+                f'xcopy /E /Y /I /Q "{kaynak_yol}\\*" "{hedef_yol}\\" >nul 2>&1\r\n'
+                f'del "{self.indirilen_dosya}" >nul 2>&1\r\n'
+                f'rmdir /S /Q "{gecici_klasor}" >nul 2>&1\r\n'
+                f'start "" "{exe_yol}"\r\n'
+            )
 
             batch_dosya = DATA_DIR / 'guncelle.bat'
             with open(batch_dosya, 'w', encoding='utf-8') as f:
                 f.write(batch_icerik)
 
-            # Batch'i calistir ve programi kapat
-            subprocess.Popen(['cmd', '/c', str(batch_dosya)])
-            logger.info("Guncelleme baslatildi, program yeniden baslatilacak")
+            logger.info(f"Batch yazildi: kaynak={kaynak_yol} hedef={hedef_yol}")
 
-            # Programi kapat
-            self.root.after(1000, self.root.destroy) if hasattr(self, 'root') else os._exit(0)
+            # Batch'i baslat (cmd /c ile - program kapandiktan sonra calisir)
+            subprocess.Popen(
+                ['cmd', '/c', str(batch_dosya)],
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                close_fds=True
+            )
+            logger.info("Guncelleme batch baslatildi, program kapatiliyor...")
+
+            # 1.5 saniye sonra programi kapat - batch timeout /t 3 ile bekler
+            import threading
+            threading.Timer(1.5, lambda: os._exit(0)).start()
 
             return True
 
         except Exception as e:
             logger.error(f"Guncelleme hatasi: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return False
 
     def guncelleme_bildirimi_gonder(self, guncelleme_bilgisi: Dict):
