@@ -22,7 +22,7 @@ GITHUB_API = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/release
 GITHUB_DOWNLOAD = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases/download"
 
 # Mevcut surum
-MEVCUT_SURUM = "1.6.7"
+MEVCUT_SURUM = "1.7"
 
 class UpdateManager:
     MEVCUT_SURUM = MEVCUT_SURUM
@@ -224,7 +224,7 @@ class UpdateManager:
             with open(batch_dosya, 'w', encoding='utf-8') as f:
                 f.write(batch_icerik)
 
-            logger.info(f"Batch yazildi: kaynak={kaynak_yol} hedef={hedef_yol}")
+            logger.info(f"Batch yazıldı: kaynak={kaynak_yol} hedef={hedef_yol}")
 
             # Batch'i baslat (cmd /c ile - program kapandiktan sonra calisir)
             subprocess.Popen(
@@ -232,7 +232,7 @@ class UpdateManager:
                 creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
                 close_fds=True
             )
-            logger.info("Guncelleme batch baslatildi, program kapatiliyor...")
+            logger.info("Guncelleme batch başlatıldı, program kapatiliyor...")
 
             # 1.5 saniye sonra programi kapat - batch timeout /t 3 ile bekler
             import threading
@@ -247,12 +247,21 @@ class UpdateManager:
             return False
 
     def guncelleme_bildirimi_gonder(self, guncelleme_bilgisi: Dict):
-        """Guncelleme varsa bildirim gonder"""
+        """Guncelleme varsa bildirim gönder"""
         if not guncelleme_bilgisi.get('var'):
             return
 
         yeni_surum = guncelleme_bilgisi.get('yeni_surum', '')
         mesaj = f"Guncelleme mevcut! v{MEVCUT_SURUM} -> v{yeni_surum}"
+
+        # Bildirimler sayfasina ekle
+        try:
+            from .database import db
+            db.bildirim_ekle('guncelleme', f"Guncelleme v{yeni_surum} yayında",
+                             f"Mevcut surum v{MEVCUT_SURUM}, yeni surum v{yeni_surum}. "
+                             f"Ayarlar > Guncelleme bölümünden indirebilirsiniz.")
+        except Exception:
+            pass
 
         # 1. Bilgisayar bildirimi
         try:
@@ -290,7 +299,7 @@ class UpdateManager:
         except:
             pass
 
-        logger.info(f"Guncelleme bildirimi gonderildi: {mesaj}")
+        logger.info(f"Guncelleme bildirimi gönderildi: {mesaj}")
 
     def kontrol_dongusu_baslat(self):
         """Her gun sabah 10:00'da kontrol et"""

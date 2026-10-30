@@ -21,6 +21,7 @@ from .task_manager import task_manager
 from .firebase_auth import firebase_auth
 from .update_manager import update_manager
 from .i18n import t, dil_ayarla, dil_getir, DILLER
+from .auth_flow import auth_flow
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,7 @@ class AsistanGUI:
 
         alert_manager.baslat()
         update_manager.kontrol_dongusu_baslat()
+        auth_flow.saatlik_kontrol_baslat()
         self._create_widgets()
         self._tema_stil_uygula()
         self._update_status()
@@ -96,6 +98,7 @@ class AsistanGUI:
             ("Görevler", MAGENTA, None),  # None = seviye bagimli
             ("Telegram", GREEN, True),
             ("Google Drive", ACCENT, True),
+            (t("menu_bildirimler"), '#f97316', True),
             (t("menu_hesap"), GREEN, True),
             (t("menu_ayarlar"), FG2, True),
         ]
@@ -116,6 +119,7 @@ class AsistanGUI:
         self._create_telegram_page()
         self._create_drive_page()
         self._create_hesap_page()
+        self._create_bildirimler_page()
         self._create_ayarlar_page()
 
         for page in self.pages.values(): page.pack_forget()
@@ -125,7 +129,7 @@ class AsistanGUI:
         """Menüyü AI seviyesine gore oluştur"""
         # Eski butonlari temizle
         for data in self.menu_buttons.values():
-            data['widget'].destroy()
+            data.get('sarmal', data['widget']).destroy()
         self.menu_buttons.clear()
 
         aktif_seviye = local_ai.aktif_seviye
@@ -139,16 +143,34 @@ class AsistanGUI:
                 continue
 
             bg = BG2
+            if text == t("menu_bildirimler"):
+                # Yuvarlak rozetli bildirimler menusu
+                sarmal = tk.Frame(self.sidebar, bg=bg, highlightbackground=BORDER,
+                                  highlightthickness=1, cursor='hand2')
+                sarmal.pack(fill=tk.X, padx=10, pady=1)
+                btn = tk.Label(sarmal, text=f"  {text}", font=('Segoe UI', 11), bg=bg,
+                              fg=color, anchor='w', cursor='hand2')
+                btn.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=4)
+                rozet = tk.Canvas(sarmal, width=24, height=24, bg=bg, highlightthickness=0,
+                                  cursor='hand2')
+                rozet.pack(side=tk.RIGHT, padx=(0, 6))
+                for _w in (sarmal, btn, rozet):
+                    _w.bind('<Button-1>', lambda e, p=text: self._switch_page(p))
+                self.menu_buttons[text] = {'widget': btn, 'color': color,
+                                           'sarmal': sarmal, 'rozet': rozet}
+                continue
+
             btn = tk.Label(self.sidebar, text=f"  {text}", font=('Segoe UI', 11), bg=bg, fg=color,
                           anchor='w', cursor='hand2', highlightbackground=BORDER, highlightthickness=1)
             btn.pack(fill=tk.X, padx=10, pady=1)
             btn.bind('<Button-1>', lambda e, p=text: self._switch_page(p))
             self.menu_buttons[text] = {'widget': btn, 'color': color}
+        self._rozet_guncelle()
 
     def _switch_page(self, page_name):
         page_map = {t("menu_sohbet"):"sohbet",t("menu_kayitlar"):"kayitlar","Form Ayarları":"form_ayarlari",
                     "Uyarılar":"uyarilar","Görevler":"gorevler","Telegram":"telegram",
-                    "Google Drive":"drive",t("menu_hesap"):"hesap",t("menu_ayarlar"):"ayarlar"}
+                    "Google Drive":"drive",t("menu_hesap"):"hesap",t("menu_ayarlar"):"ayarlar",t("menu_bildirimler"):"bildirimler"}
         page_key = page_map.get(page_name, page_name.lower())
 
         # Kaydedilmemis renk onizlemesi varsa geri al (Ayarlardan cikis)
@@ -161,7 +183,11 @@ class AsistanGUI:
             page_name = 'Sohbet'
 
         for text, data in self.menu_buttons.items():
-            data['widget'].config(bg=BG3 if text == page_name else BG2)
+            _renk = BG3 if text == page_name else BG2
+            data['widget'].config(bg=_renk)
+            if 'sarmal' in data:
+                data['sarmal'].config(bg=_renk)
+                data['rozet'].config(bg=_renk)
         for page in self.pages.values(): page.pack_forget()
         if page_key in self.pages:
             self.pages[page_key].pack(fill=tk.BOTH, expand=True)
@@ -172,6 +198,7 @@ class AsistanGUI:
         elif page_key == "gorevler": self._refresh_gorevler()
         elif page_key == "drive": self._refresh_drive_status()
         elif page_key == "hesap": self._refresh_hesap()
+        elif page_key == "bildirimler": self._refresh_bildirimler()
         elif page_key == "ayarlar": self._refresh_ayarlar()
 
     def _create_header(self, parent, title):
@@ -614,7 +641,7 @@ class AsistanGUI:
     def _uyari_ayarlari_kaydet(self):
         gun_once = self.gun_once_entry.get().strip()
         if not gun_once.isdigit() or not (1 <= int(gun_once) <= 365):
-            messagebox.showerror("Hata", "1-365 arasi olmali!"); return
+            messagebox.showerror("Hata", "1-365 arasi olmalı!"); return
         alert_manager.ayar_kaydet('gun_once', gun_once)
         alert_manager.ayar_kaydet('yil_once', self.yil_spin.get())
         kanallar = []
@@ -626,7 +653,7 @@ class AsistanGUI:
 
     def _test_uyari(self):
         alert_manager.bildirim_gonder({'id':0,'musteri_ad':'TEST','uyari_tarihi':datetime.now().strftime('%d.%m.%Y'),'aciklama':'Test','kanallar':'bilgisayar'})
-        messagebox.showinfo(t("uyari_test"), "Test uyarı gonderildi!")
+        messagebox.showinfo(t("uyari_test"), "Test uyarı gönderildi!")
 
     def _manuel_uyari_ekle(self):
         dialog = tk.Toplevel(self.root)
@@ -954,17 +981,6 @@ class AsistanGUI:
         self.kayit_sifre.pack(fill=tk.X, ipady=4, pady=(2,8))
         tk.Button(self.kayit_frame, text=t("hesap_olustur"), bg=MAGENTA, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._hesap_olustur).pack(anchor=tk.W)
 
-        # 2FA - sag sutunda
-        self.totp_frame = tk.LabelFrame(sag, text="  İki Adımlı Doğrulama (2FA)  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=YELLOW, padx=15, pady=12)
-        self.totp_frame.pack(fill=tk.X, pady=(0,10))
-        self.totp_durum_label = tk.Label(self.totp_frame, text="Kapalı", font=('Segoe UI', 10, 'bold'), bg=BG, fg=RED)
-        self.totp_durum_label.pack(anchor=tk.W)
-        totp_btn_frame = tk.Frame(self.totp_frame, bg=BG)
-        totp_btn_frame.pack(fill=tk.X, pady=(8,0))
-        tk.Button(totp_btn_frame, text="2FA Aktif Et", bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._totp_aktif_et).pack(side=tk.LEFT, padx=(0,5))
-        tk.Button(totp_btn_frame, text="2FA Kaldır", bg=RED, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._totp_kaldir).pack(side=tk.LEFT, padx=5)
-        tk.Label(self.totp_frame, text="Google Authenticator ile dogrulama yapin.", font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W, pady=(5,0))
-
         # GERI BILDIRIM
         geri_frame = tk.LabelFrame(sag, text="  Geri Bildirim  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=12)
         geri_frame.pack(fill=tk.X, pady=(10,10))
@@ -990,28 +1006,341 @@ class AsistanGUI:
                  relief=tk.FLAT, padx=20, command=self._geri_bildirim_gonder).pack(anchor=tk.W)
 
         # Cikis - sag sutunda
+        # TELEFON DOGRULAMA (zorunlu)
+        self.telefon_frame = tk.LabelFrame(sag, text="  Telefon Doğrulaması (Zorunlu)  ",
+                                           font=('Segoe UI', 11, 'bold'), bg=BG, fg=GREEN,
+                                           padx=15, pady=12)
+        self.telefon_durum_label = tk.Label(self.telefon_frame, text="",
+                                            font=('Segoe UI', 10, 'bold'), bg=BG, fg=RED)
+        self.telefon_durum_label.pack(anchor=tk.W)
+        tk.Button(self.telefon_frame, text=t("telefon_dogrula"), bg=ACCENT, fg='white',
+                 font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12,
+                 command=self._telefon_dogrula).pack(anchor=tk.W, pady=(8, 0))
+        tk.Label(self.telefon_frame,
+                 text="Telegram üzerinden ücretsiz doğrulama kodu gönderilir.",
+                 font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W, pady=(5, 0))
+
         self.cikis_btn = tk.Button(sag, text=t("hesap_cikis"), bg=RED, fg='white', font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, pady=8, command=self._cikis_yap)
-        self.cikis_btn.pack(anchor=tk.W, pady=(5,0))
 
     def _refresh_hesap(self):
-        if firebase_auth.giris_yapildi_mi():
+        girisli = firebase_auth.giris_yapildi_mi()
+        if girisli:
             bilgi = firebase_auth.kullanici_bilgisi()
-            self.hesap_durum_label.config(text="Giriş Yapıldı", fg=GREEN)
+            self.hesap_durum_label.config(text="Giriş Yapildi", fg=GREEN)
             self.hesap_bilgi_label.config(
                 text=f"{bilgi.get('ad','')} {bilgi.get('soyad','')} | {bilgi.get('email','')} | Plan: {bilgi.get('plan','ucretsiz')}")
             self.giris_frame.pack_forget()
             self.kayit_frame.pack_forget()
+            # Cikis butonu sadece giris yapilinca gorunur
+            self.cikis_btn.pack(anchor=tk.W, pady=(5, 0))
         else:
             self.hesap_durum_label.config(text="Giriş yapılmadı", fg=RED)
-            self.hesap_bilgi_label.config(text="Hesap oluşturun veya giriş yapin")
-            self.giris_frame.pack(fill=tk.X, pady=(0,10))
-            self.kayit_frame.pack(fill=tk.X, pady=(0,10))
+            self.hesap_bilgi_label.config(text="Hesap oluşturun veya giris yapın")
+            self.giris_frame.pack(fill=tk.X, pady=(0, 10))
+            self.kayit_frame.pack(fill=tk.X, pady=(0, 10))
+            self.cikis_btn.pack_forget()
 
-        if firebase_auth.totp_durumu():
-            self.totp_durum_label.config(text="Aktif", fg=GREEN)
+        # Telefon dogrulama bolumu (zorunlu)
+        if auth_flow.hesap_var_mi():
+            self.telefon_frame.pack(fill=tk.X, pady=(0, 10))
+            if auth_flow.telefon_dogrulandi_mi():
+                self.telefon_durum_label.config(text=t("telefon_dogrulandi"), fg=GREEN)
+            else:
+                self.telefon_durum_label.config(text=t("telefon_bekliyor"), fg=RED)
         else:
-            self.totp_durum_label.config(text="Kapalı", fg=RED)
+            self.telefon_frame.pack_forget()
 
+
+    # ═══════════════════════════════════════════
+    # BILDIRIMLER SAYFASI
+    # ═══════════════════════════════════════════
+    def _create_bildirimler_page(self):
+        page = tk.Frame(self.content, bg=BG); self.pages['bildirimler'] = page
+        self._create_header(page, t("bildirim_baslik"))
+
+        bar = tk.Frame(page, bg=BG)
+        bar.pack(fill=tk.X, padx=10, pady=8)
+        tk.Button(bar, text=t("bildirim_tumu_okundu"), bg=GREEN, fg='white',
+                 font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12,
+                 command=self._tum_bildirim_okundu).pack(side=tk.LEFT, padx=4)
+        tk.Button(bar, text=t("bildirim_yenile"), bg=CYAN, fg='white',
+                 font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12,
+                 command=self._refresh_bildirimler).pack(side=tk.LEFT, padx=4)
+
+        canvas = tk.Canvas(page, bg=BG, highlightthickness=0)
+        vsb = ttk.Scrollbar(page, orient=tk.VERTICAL, command=canvas.yview)
+        self.bildirim_frame = tk.Frame(canvas, bg=BG)
+        self.bildirim_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=self.bildirim_frame, anchor="nw")
+        canvas.configure(yscrollcommand=vsb.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0), pady=(0, 10))
+        vsb.pack(side=tk.RIGHT, fill=tk.Y, pady=(0, 10))
+
+    def _refresh_bildirimler(self):
+        for w in self.bildirim_frame.winfo_children():
+            w.destroy()
+        kayitlar = db.tum_bildirimler()
+        if not kayitlar:
+            tk.Label(self.bildirim_frame, text=t("bildirim_bos"), font=('Segoe UI', 11),
+                     bg=BG, fg=FG2).pack(pady=40)
+        for bid, tur, baslik, mesaj, okundu, zaman in kayitlar:
+            kart_bg = BG2 if okundu else '#eef4ff'
+            cerceve = BORDER if okundu else ACCENT
+            kart = tk.Frame(self.bildirim_frame, bg=kart_bg, highlightbackground=cerceve,
+                            highlightthickness=1, padx=12, pady=8)
+            kart.pack(fill=tk.X, pady=3)
+            ust = tk.Frame(kart, bg=kart_bg)
+            ust.pack(fill=tk.X)
+            tk.Label(ust, text=baslik, font=('Segoe UI', 10, 'bold'), bg=kart_bg,
+                     fg=(FG if okundu else ACCENT)).pack(side=tk.LEFT)
+            tk.Label(ust, text=str(zaman), font=('Segoe UI', 8), bg=kart_bg, fg=FG2).pack(side=tk.RIGHT)
+            if mesaj:
+                tk.Label(kart, text=mesaj, font=('Segoe UI', 9), bg=kart_bg, fg=FG2,
+                         wraplength=760, justify=tk.LEFT).pack(fill=tk.X, pady=(3, 0))
+            if not okundu:
+                tk.Button(kart, text="Okundu", bg=GREEN, fg='white', font=('Segoe UI', 8),
+                         relief=tk.FLAT, padx=8,
+                         command=lambda i=bid: self._bildirim_okundu(i)).pack(anchor=tk.E, pady=(4, 0))
+        self._rozet_guncelle()
+
+    def _bildirim_okundu(self, bildirim_id):
+        db.bildirim_okundu(bildirim_id)
+        self._refresh_bildirimler()
+
+    def _tum_bildirim_okundu(self):
+        db.tum_bildirimleri_okundu_yap()
+        self._refresh_bildirimler()
+
+    def _rozet_guncelle(self):
+        veri = self.menu_buttons.get(t("menu_bildirimler"))
+        if not veri or 'rozet' not in veri:
+            return
+        cv = veri['rozet']
+        cv.delete('all')
+        n = db.okunmamis_bildirim_sayisi()
+        if n > 0:
+            cv.create_oval(3, 3, 21, 21, fill=RED, outline='')
+            cv.create_text(12, 12, text=str(min(n, 99)), fill='white',
+                           font=('Segoe UI', 8, 'bold'))
+
+    def _bildirim_ekle(self, tur, baslik, mesaj=''):
+        db.bildirim_ekle(tur, baslik, mesaj)
+        self._rozet_guncelle()
+
+    # ═══════════════════════════════════════════
+    # DOGRULAMA AKISI (e-posta kodu + zorunlu QR + telefon)
+    # ═══════════════════════════════════════════
+    def _kod_penceresi(self, baslik, aciklama, gonderildi, dogrulama_fonk, basari, fallback_kod=None):
+        dialog = tk.Toplevel(self.root)
+        dialog.title(baslik)
+        dialog.geometry("480x360")
+        dialog.configure(bg=BG)
+        dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - 480) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - 360) // 2
+        dialog.geometry(f"+{max(x, 0)}+{max(y, 0)}")
+
+        tk.Label(dialog, text=baslik, font=('Segoe UI', 13, 'bold'), bg=BG, fg=ACCENT).pack(pady=(18, 8))
+        tk.Label(dialog, text=aciklama, font=('Segoe UI', 10), bg=BG, fg=FG,
+                 wraplength=420, justify=tk.CENTER).pack(padx=20)
+        if not gonderildi and fallback_kod:
+            tk.Label(dialog, text=f"Kod: {fallback_kod}", font=('Segoe UI', 14, 'bold'),
+                     bg=BG, fg=RED).pack(pady=10)
+        hata_label = tk.Label(dialog, text="", font=('Segoe UI', 9), bg=BG, fg=RED)
+        hata_label.pack(pady=(6, 0))
+
+        kod_var = tk.StringVar()
+        entry = tk.Entry(dialog, textvariable=kod_var, font=('Segoe UI', 16), justify=tk.CENTER,
+                         width=10, bg=BG2, fg=FG, relief=tk.FLAT)
+        entry.pack(pady=10, ipady=6)
+        entry.focus_set()
+
+        def dogrula():
+            if dogrulama_fonk(kod_var.get()):
+                dialog.destroy()
+                basari()
+            else:
+                hata_label.config(text=t("dogrulama_hatali"))
+                kod_var.set('')
+
+        tk.Button(dialog, text=t("dogrulama_yap"), bg=GREEN, fg='white',
+                 font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=24, pady=6,
+                 command=dogrula).pack(pady=6)
+        entry.bind('<Return>', lambda e: dogrula())
+
+    def _email_kod_basarili(self):
+        # E-posta dogrulandi -> simdi zorunlu QR adimi
+        self._qr_penceresi(kayit=True)
+
+    def _qr_penceresi(self, kayit=False):
+        bekleyen = getattr(self, '_bekleyen_kayit', None) if kayit else None
+        email = ''
+        if bekleyen:
+            email = bekleyen.get('email', '')
+        if not email:
+            email = db.ayar_get('hesap_email', '') or 'asistan@hesap'
+        secret = auth_flow.totp_hazirla(email)
+        if not secret:
+            messagebox.showerror(t("hata"), "QR kod olusturulamadi!")
+            return
+
+        dialog = tk.Toplevel(self.root)
+        dialog.title(t("dogrulama_qr_baslik"))
+        dialog.geometry("470x640")
+        dialog.configure(bg=BG)
+        dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - 470) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - 640) // 2
+        dialog.geometry(f"+{max(x, 0)}+{max(y, 0)}")
+
+        tk.Label(dialog, text=t("dogrulama_qr_baslik"), font=('Segoe UI', 13, 'bold'),
+                 bg=BG, fg=MAGENTA).pack(pady=(16, 6))
+        tk.Label(dialog, text=t("dogrulama_qr_acikla"), font=('Segoe UI', 10), bg=BG, fg=FG,
+                 wraplength=410, justify=tk.CENTER).pack(padx=16)
+        try:
+            self._qr_photo = tk.PhotoImage(file=auth_flow.qr_dosya)
+            tk.Label(dialog, image=self._qr_photo, bg='white').pack(pady=12)
+        except Exception:
+            tk.Label(dialog, text=f"QR dosyasi: {auth_flow.qr_dosya}",
+                     font=('Segoe UI', 9), bg=BG, fg=FG2, wraplength=400).pack(pady=12)
+
+        hata = tk.Label(dialog, text="", font=('Segoe UI', 9), bg=BG, fg=RED)
+        hata.pack()
+        kod_var = tk.StringVar()
+        entry = tk.Entry(dialog, textvariable=kod_var, font=('Segoe UI', 16), justify=tk.CENTER,
+                         width=10, bg=BG2, fg=FG, relief=tk.FLAT)
+        entry.pack(pady=8, ipady=6)
+        entry.focus_set()
+
+        def tamamla():
+            if not auth_flow.totp_dogrula(kod_var.get()):
+                hata.config(text=t("dogrulama_qr_hatali"))
+                kod_var.set('')
+                return
+            sirri = auth_flow.totp_sirri()
+            if kayit and bekleyen:
+                sonuc = firebase_auth.kayit_ol(bekleyen['email'], bekleyen['sifre'], bekleyen['ad'],
+                                               bekleyen['soyad'], bekleyen['dogum'], bekleyen['telefon'])
+                if not sonuc.get('success'):
+                    messagebox.showerror(t("hata"), str(sonuc.get('error')), parent=dialog)
+                    return
+                db.ayar_kaydet('hesap_email', bekleyen['email'])
+                db.ayar_kaydet('totp_secret', sirri or '')
+                self._eksik_bilgi_kontrol(bekleyen['ad'], bekleyen['soyad'],
+                                          bekleyen['telefon'], bekleyen['dogum'])
+                self._bekleyen_kayit = None
+                messagebox.showinfo(t("basarili"),
+                                    "Hesap oluşturuldu! İki adımlı doğrulama aktif.",
+                                    parent=dialog)
+            else:
+                db.ayar_kaydet('totp_secret', sirri or '')
+                if not db.ayar_get('hesap_email', ''):
+                    db.ayar_kaydet('hesap_email', email)
+                self._eksik_bilgi_kontrol()
+                messagebox.showinfo(t("basarili"), "Doğrulama tamamlandı!", parent=dialog)
+            auth_flow.totp_temizle()
+            dialog.destroy()
+            self._refresh_hesap()
+            self._rozet_guncelle()
+
+        tk.Button(dialog, text=t("dogrulama_qr_tamam"), bg=GREEN, fg='white',
+                 font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=20, pady=6,
+                 command=tamamla).pack(pady=10)
+        entry.bind('<Return>', lambda e: tamamla())
+
+    def _eksik_bilgi_kontrol(self, ad='', soyad='', telefon='', dogum=''):
+        eksikler = []
+        if not str(ad).strip(): eksikler.append('Ad')
+        if not str(soyad).strip(): eksikler.append('Soyad')
+        if not str(telefon).strip(): eksikler.append('Telefon')
+        if not str(dogum).strip(): eksikler.append('Doğum Tarihi')
+        if eksikler:
+            self._bildirim_ekle('hesap', t("eksik_bilgi_baslik"),
+                                t("eksik_bilgi_mesaj") + "\nEksik alanlar: " + ", ".join(eksikler))
+
+    def _hesap_olustur(self):
+        ad = self.kayit_ad.get().strip()
+        soyad = self.kayit_soyad.get().strip()
+        email = self.kayit_email.get().strip()
+        sifre = self.kayit_sifre.get().strip()
+        if not all([ad, soyad, email, sifre]):
+            messagebox.showerror(t("hata"), "Ad, Soyad, E-posta ve Şifre zorunlu!")
+            return
+        if len(sifre) < 6:
+            messagebox.showerror(t("hata"), "Şifre en az 6 karakter olmalı!")
+            return
+        if '@' not in email or '.' not in email:
+            messagebox.showerror(t("hata"), "Geçerli bir e-posta adresi girin!")
+            return
+        self._bekleyen_kayit = {
+            'ad': ad, 'soyad': soyad, 'email': email, 'sifre': sifre,
+            'dogum': self.kayit_dogum.get().strip(),
+            'telefon': self.kayit_telefon.get().strip(),
+        }
+        # Adim 1: e-posta dogrulama kodu
+        kod = auth_flow.email_kodu_hazirla(email)
+        gonderildi = auth_flow.email_kodu_gonder(
+            email, "Asistan - Doğrulama Kodu",
+            f"Merhaba,\n\nAsistan hesap doğrulama kodunuz: {kod}\n\nBu kod 5 dakika geçerlidir.")
+        self._kod_penceresi(
+            baslik=t("dogrulama_mail_baslik"),
+            aciklama=(t("dogrulama_mail_gonderildi") if gonderildi
+                      else t("dogrulama_mail_yok")),
+            gonderildi=gonderildi,
+            dogrulama_fonk=auth_flow.email_kodu_dogrula,
+            basari=self._email_kod_basarili,
+            fallback_kod=kod if not gonderildi else None)
+
+    def _google_oauth(self):
+        url = firebase_auth.google_oauth_url()
+        if not url:
+            messagebox.showwarning(t("uyari"), "Once Firebase API key ayarlayin!")
+            return
+        import webbrowser
+        webbrowser.open(url)
+        messagebox.showinfo(t("menu_hesap"),
+                            "Tarayıcıda Google girişi yapın. Sonra QR doğrulaması istenecek.")
+        # Zorunlu QR adimi
+        self._qr_penceresi(kayit=False)
+
+    def _github_oauth(self):
+        import webbrowser
+        webbrowser.open(firebase_auth.github_oauth_url("Ov23liYOUR_CLIENT_ID"))
+        messagebox.showinfo(t("menu_hesap"),
+                            "Tarayıcıda GitHub girişi yapın. Sonra QR doğrulaması istenecek.")
+        # Zorunlu QR adimi
+        self._qr_penceresi(kayit=False)
+
+    # ═══════════════════════════════════════════
+    # TELEFON DOGRULAMA (Telegram - ucretsiz, zorunlu)
+    # ═══════════════════════════════════════════
+    def _telefon_dogrula(self):
+        if not auth_flow.hesap_var_mi():
+            messagebox.showwarning(t("uyari"), t("hesap_giris_yapilmadi"))
+            return
+        if auth_flow.telefon_dogrulandi_mi():
+            messagebox.showinfo(t("tamam"), t("telefon_dogrulandi"))
+            return
+        kod = auth_flow.telefon_kodu_hazirla()
+        gonderildi = auth_flow.telegram_kod_gonder(kod)
+        self._kod_penceresi(
+            baslik=t("telefon_baslik"),
+            aciklama=(t("telefon_gonderildi") if gonderildi
+                      else t("telefon_gonderilemedi")),
+            gonderildi=gonderildi,
+            dogrulama_fonk=auth_flow.telefon_kodu_dogrula,
+            basari=self._telefon_basarili,
+            fallback_kod=None if gonderildi else kod)
+
+    def _telefon_basarili(self):
+        db.ayar_kaydet('telefon_dogrulandi', '1')
+        db.ayar_kaydet('son_telefon_uyarisi', '')
+        self._bildirim_ekle('bilgi', t("telefon_dogrulandi"),
+                            "Telefon doğrulaması başarıyla tamamlandı.")
+        messagebox.showinfo(t("basarili"), t("telefon_dogrulandi"))
+        self._refresh_hesap()
 
     def _giris_yap(self):
         email = self.giris_email.get().strip()
@@ -1025,39 +1354,9 @@ class AsistanGUI:
         else:
             messagebox.showerror("Hata", sonuc['error'])
 
-    def _hesap_olustur(self):
-        ad = self.kayit_ad.get().strip()
-        soyad = self.kayit_soyad.get().strip()
-        email = self.kayit_email.get().strip()
-        sifre = self.kayit_sifre.get().strip()
-        if not all([ad, soyad, email, sifre]):
-            messagebox.showerror("Hata", "Ad, Soyad, E-posta ve Şifre zorunlu!"); return
-        if len(sifre) < 6:
-            messagebox.showerror("Hata", "Şifre en az 6 karakter olmali!"); return
-        sonuc = firebase_auth.kayit_ol(email, sifre, ad, soyad,
-                                       self.kayit_dogum.get().strip(), self.kayit_telefon.get().strip())
-        if sonuc['success']:
-            messagebox.showinfo("Başarılı", "Hesap oluşturuldu! E-posta dogrulama gonderildi.")
-            self._refresh_hesap()
-        else:
-            messagebox.showerror("Hata", sonuc['error'])
-
-    def _google_oauth(self):
-        url = firebase_auth.google_oauth_url()
-        if not url:
-            messagebox.showwarning("Uyarı", "Önce Firebase API key ayarlayin!"); return
-        import webbrowser
-        webbrowser.open(url)
-        messagebox.showinfo("Bilgi", "Tarayıcıda Google girisi yapin.")
-
-    def _github_oauth(self):
-        import webbrowser
-        webbrowser.open(firebase_auth.github_oauth_url("Ov23liYOUR_CLIENT_ID"))
-        messagebox.showinfo("Bilgi", "Tarayıcıda GitHub girisi yapin.")
-
     def _totp_aktif_et(self):
         if not firebase_auth.giris_yapildi_mi():
-            messagebox.showwarning("Uyarı", "Önce giriş yapin!"); return
+            messagebox.showwarning("Uyarı", "Önce giriş yapın!"); return
         sonuc = firebase_auth.totp_olustur()
         if not sonuc['success']:
             messagebox.showerror("Hata", sonuc['error']); return
@@ -1095,7 +1394,7 @@ class AsistanGUI:
             else:
                 messagebox.showerror("Hata", "Gecersiz kod!", parent=dialog)
 
-        tk.Button(dialog, text="Dogrula", bg=YELLOW, fg='white', font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, command=dogrula).pack(pady=10)
+        tk.Button(dialog, text="Doğrula", bg=YELLOW, fg='white', font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, command=dogrula).pack(pady=10)
 
     def _totp_kaldir(self):
         if messagebox.askyesno("Onay", "2FA kaldirilsin mi?"):
@@ -1238,7 +1537,7 @@ class AsistanGUI:
         if basarili:
             self._refresh_drive_status()
             drive_sync.baslat()
-            messagebox.showinfo("Baglandi", "Google Drive'a baglandi!\nOtomatik yedekleme baslatildi.")
+            messagebox.showinfo("Baglandi", "Google Drive'a baglandi!\nOtomatik yedekleme başlatıldı.")
         else:
             messagebox.showerror("Hata", "Bağlantı başarısız!\nInternet baglantinizi kontrol edin.")
 
@@ -1276,7 +1575,7 @@ class AsistanGUI:
 
     def _drive_yedek_sonuc(self, basarili):
         if basarili:
-            messagebox.showinfo("Tamam", "Yedekleme tamamlandi!")
+            messagebox.showinfo("Tamam", "Yedekleme tamamlandı!")
             self._refresh_drive_status()
         else:
             messagebox.showerror("Hata", "Yedekleme başarısız!")
@@ -1830,7 +2129,7 @@ class AsistanGUI:
         self._renk_onizleme = False
 
     def _pencere_kapat(self):
-        """Kapatmadan once kaydedilmemis renk onizlemesini geri al"""
+        """Kapatmadan önce kaydedilmemis renk onizlemesini geri al"""
         self._renk_geri_al()
         self.root.destroy()
 

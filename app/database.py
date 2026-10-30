@@ -103,7 +103,70 @@ class Database:
             self.conn.commit()
         except Exception:
             pass
-    
+
+        # Bildirimler tablosu
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS bildirimler (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tur TEXT DEFAULT 'bilgi',
+                    baslik TEXT NOT NULL,
+                    mesaj TEXT DEFAULT '',
+                    okundu INTEGER DEFAULT 0,
+                    olusturma TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            self.conn.commit()
+        except Exception as e:
+            logger.error(f"Bildirimler tablosu hatasi: {e}")
+
+    def bildirim_ekle(self, tur: str, baslik: str, mesaj: str = '') -> int:
+        # Bildirim ekle (okunmamis)
+        try:
+            c = self.conn.cursor()
+            c.execute('INSERT INTO bildirimler (tur, baslik, mesaj) VALUES (?, ?, ?)',
+                      (tur, baslik, mesaj))
+            self.conn.commit()
+            return c.lastrowid
+        except Exception as e:
+            logger.error(f"Bildirim ekleme hatasi: {e}")
+            return 0
+
+    def tum_bildirimler(self, limit: int = 200):
+        try:
+            c = self.conn.cursor()
+            c.execute('SELECT id, tur, baslik, mesaj, okundu, olusturma '
+                      'FROM bildirimler ORDER BY id DESC LIMIT ?', (limit,))
+            return c.fetchall()
+        except Exception as e:
+            logger.error(f"Bildirim listeleme hatasi: {e}")
+            return []
+
+    def okunmamis_bildirim_sayisi(self) -> int:
+        try:
+            c = self.conn.cursor()
+            c.execute('SELECT COUNT(*) FROM bildirimler WHERE okundu = 0')
+            return c.fetchone()[0]
+        except Exception:
+            return 0
+
+    def bildirim_okundu(self, bildirim_id: int):
+        try:
+            c = self.conn.cursor()
+            c.execute('UPDATE bildirimler SET okundu = 1 WHERE id = ?', (bildirim_id,))
+            self.conn.commit()
+        except Exception:
+            pass
+
+    def tum_bildirimleri_okundu_yap(self):
+        try:
+            c = self.conn.cursor()
+            c.execute('UPDATE bildirimler SET okundu = 1 WHERE okundu = 0')
+            self.conn.commit()
+        except Exception:
+            pass
+
     def kayit_ekle(self, kayit: Dict) -> int:
         """Yeni kayit ekle"""
         try:
