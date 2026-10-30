@@ -1458,10 +1458,12 @@ class AsistanGUI:
                  font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelleme_kontrol).pack(side=tk.LEFT, padx=(0,5))
 
         self.indir_btn = tk.Button(guncelleme_btn_frame, text=t("update_indir"), bg=ACCENT, fg='white',
+                 disabledforeground='white', activebackground=ACCENT, activeforeground='white',
                  font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelleme_indir, state=tk.DISABLED)
         self.indir_btn.pack(side=tk.LEFT, padx=5)
 
         self.guncelle_btn = tk.Button(guncelleme_btn_frame, text=t("update_guncelle"), bg=GREEN, fg='white',
+                 disabledforeground='white', activebackground=GREEN, activeforeground='white',
                  font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelle_ve_baslat, state=tk.DISABLED)
         self.guncelle_btn.pack(side=tk.LEFT, padx=5)
 
@@ -1757,6 +1759,15 @@ class AsistanGUI:
             self._kontrast_yazilar(self.root)
         except Exception:
             pass
+
+        # Guncelleme butonlari HER TEMADA beyaz yazili kalsin
+        for _b in (getattr(self, 'indir_btn', None), getattr(self, 'guncelle_btn', None)):
+            try:
+                if _b is not None:
+                    _b.config(fg='white', disabledforeground='white',
+                              activeforeground='white')
+            except Exception:
+                pass
 
     def _kontrast_yazilar(self, w):
         """Yazi rengi arka plana cok yakin ise kontrastli rengi sec"""

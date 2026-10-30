@@ -22,7 +22,7 @@ GITHUB_API = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/release
 GITHUB_DOWNLOAD = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases/download"
 
 # Mevcut surum
-MEVCUT_SURUM = "1.6.6"
+MEVCUT_SURUM = "1.6.7"
 
 class UpdateManager:
     MEVCUT_SURUM = MEVCUT_SURUM
