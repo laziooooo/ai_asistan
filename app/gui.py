@@ -245,8 +245,12 @@ class AsistanGUI:
         kayit_id = values[0]
 
         dialog = tk.Toplevel(self.root)
-        dialog.title(f"Kayit #{kayit_id} Duzenle"); dialog.geometry("500x400"); dialog.configure(bg=BG)
+        dialog.title(f"Kayit #{kayit_id} Duzenle"); dialog.geometry("600x500"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
 
         tk.Label(dialog, text=f"Kayit #{kayit_id}", font=('Segoe UI', 13, 'bold'), bg=BG, fg=YELLOW).pack(pady=(10,8))
 
@@ -406,8 +410,12 @@ class AsistanGUI:
 
     def _form_alan_ekle(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Yeni Alan"); dialog.geometry("380x320"); dialog.configure(bg=BG)
+        dialog.title("Yeni Alan"); dialog.geometry("520x480"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text="➕ Yeni Alan", font=('Segoe UI', 13, 'bold'), bg=BG, fg=ACCENT).pack(pady=(10,8))
         tk.Label(dialog, text="Alan Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
@@ -536,8 +544,12 @@ class AsistanGUI:
 
     def _manuel_uyari_ekle(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Manuel Uyari"); dialog.geometry("400x250"); dialog.configure(bg=BG)
+        dialog.title("Manuel Uyari"); dialog.geometry("520x350"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text="Manuel Uyari", font=('Segoe UI', 13, 'bold'), bg=BG, fg=MAGENTA).pack(pady=(10,8))
         tk.Label(dialog, text="Musteri Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
@@ -566,8 +578,12 @@ class AsistanGUI:
 
     def _mail_ayarlari(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Mail Ayarlari"); dialog.geometry("420x300"); dialog.configure(bg=BG)
+        dialog.title("Mail Ayarlari"); dialog.geometry("520x400"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text="Mail Ayarlari", font=('Segoe UI', 13, 'bold'), bg=BG, fg=CYAN).pack(pady=(10,8))
         entries = {}
         for label_text, anahtar, varsayilan in [("SMTP:",'mail_smtp','smtp.gmail.com'),("Port:",'mail_port','587'),("Gonderen:",'mail_user',''),("Sifre:",'mail_pass',''),("Alici:",'mail_to','')]:
@@ -632,8 +648,12 @@ class AsistanGUI:
 
     def _gorev_ekle(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Yeni Gorev"); dialog.geometry("500x350"); dialog.configure(bg=BG)
+        dialog.title("Yeni Gorev"); dialog.geometry("600x450"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text="➕ Yeni Gorev", font=('Segoe UI', 13, 'bold'), bg=BG, fg=GREEN).pack(pady=(10,8))
         tk.Label(dialog, text="Gorev Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
@@ -675,8 +695,12 @@ class AsistanGUI:
         if not gorev: return
 
         dialog = tk.Toplevel(self.root)
-        dialog.title(f"Gorev #{gorev_id}"); dialog.geometry("500x350"); dialog.configure(bg=BG)
+        dialog.title(f"Gorev #{gorev_id}"); dialog.geometry("600x450"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text=f"Gorev #{gorev_id} Duzenle", font=('Segoe UI', 13, 'bold'), bg=BG, fg=YELLOW).pack(pady=(10,8))
         tk.Label(dialog, text="Gorev Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
@@ -954,7 +978,7 @@ class AsistanGUI:
 
         dialog = tk.Toplevel(self.root)
         dialog.title("Iki Adimli Dogrulama")
-        dialog.geometry("400x450")
+        dialog.geometry("500x550")
         dialog.configure(bg=BG)
         dialog.transient(self.root)
         dialog.grab_set()
