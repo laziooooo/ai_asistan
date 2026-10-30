@@ -20,6 +20,7 @@ from .local_ai import local_ai, AI_SEVIYELER
 from .task_manager import task_manager
 from .firebase_auth import firebase_auth
 from .update_manager import update_manager
+from .i18n import t, dil_ayarla, dil_getir, DILLER
 
 logger = logging.getLogger(__name__)
 
@@ -72,15 +73,15 @@ class AsistanGUI:
 
         # Tum menu ogeleri - gorevler sadece aktif seviyede gorunur
         self.tum_menu_ogeleri = [
-            ("Sohbet", CYAN, True),
-            ("Kayitlar", MAGENTA, True),
+            (t("menu_sohbet"), CYAN, True),
+            (t("menu_kayitlar"), MAGENTA, True),
             ("Form Ayarlari", YELLOW, True),
             ("Uyarilar", RED, True),
             ("Gorevler", MAGENTA, None),  # None = seviye bagimli
             ("Telegram", GREEN, True),
             ("Google Drive", ACCENT, True),
-            ("Hesap", GREEN, True),
-            ("Ayarlar", FG2, True),
+            (t("menu_hesap"), GREEN, True),
+            (t("menu_ayarlar"), FG2, True),
         ]
 
         self._build_menu()
@@ -102,7 +103,7 @@ class AsistanGUI:
         self._create_ayarlar_page()
 
         for page in self.pages.values(): page.pack_forget()
-        self._switch_page("Sohbet")
+        self._switch_page(t("menu_sohbet"))
 
     def _build_menu(self):
         """Menuyu AI seviyesine gore olustur"""
@@ -129,9 +130,9 @@ class AsistanGUI:
             self.menu_buttons[text] = {'widget': btn, 'color': color}
 
     def _switch_page(self, page_name):
-        page_map = {"Sohbet":"sohbet","Kayitlar":"kayitlar","Form Ayarlari":"form_ayarlari",
+        page_map = {t("menu_sohbet"):"sohbet",t("menu_kayitlar"):"kayitlar","Form Ayarlari":"form_ayarlari",
                     "Uyarilar":"uyarilar","Gorevler":"gorevler","Telegram":"telegram",
-                    "Google Drive":"drive","Hesap":"hesap","Ayarlar":"ayarlar"}
+                    "Google Drive":"drive",t("menu_hesap"):"hesap",t("menu_ayarlar"):"ayarlar"}
         page_key = page_map.get(page_name, page_name.lower())
 
         # Gorevler sayfasi kapaliysa Sohbet'e yonlendir
@@ -164,7 +165,7 @@ class AsistanGUI:
     # ═══════════════════════════════════════════
     def _create_sohbet_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['sohbet'] = page
-        self._create_header(page, "Sohbet")
+        self._create_header(page, t("menu_sohbet"))
         chat_frame = tk.Frame(page, bg=BG); chat_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
         self.chat_display = tk.Text(chat_frame, wrap=tk.WORD, bg=BG, fg=FG, font=('Segoe UI', 11), relief=tk.FLAT, padx=5, pady=5, state=tk.DISABLED)
         self.chat_display.pack(fill=tk.BOTH, expand=True)
@@ -175,14 +176,14 @@ class AsistanGUI:
         self.msg_entry = tk.Entry(input_frame, font=('Segoe UI', 12), bg=BG, fg=FG, insertbackground=FG, relief=tk.FLAT, bd=0)
         self.msg_entry.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, ipady=12, padx=(10,10))
         self.msg_entry.bind('<Return>', self._send_message)
-        tk.Button(input_frame, text="Gonder", bg=ACCENT, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._send_message).pack(side=tk.RIGHT, ipady=12)
+        tk.Button(input_frame, text=t("gonder"), bg=ACCENT, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._send_message).pack(side=tk.RIGHT, ipady=12)
 
     # ═══════════════════════════════════════════
     # KAYITLAR
     # ═══════════════════════════════════════════
     def _create_kayitlar_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['kayitlar'] = page
-        self._create_header(page, "Kayitlar")
+        self._create_header(page, t("menu_kayitlar"))
         btn_frame = tk.Frame(page, bg=BG2, pady=8, highlightbackground=BORDER, highlightthickness=1)
         btn_frame.pack(fill=tk.X)
         tk.Button(btn_frame, text="Yenile", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._refresh_kayitlar).pack(side=tk.LEFT, padx=8)
@@ -287,7 +288,7 @@ class AsistanGUI:
 
         bf = tk.Frame(dialog, bg=BG); bf.pack(pady=10)
         tk.Button(bf, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=kaydet).pack(side=tk.LEFT, padx=5)
-        tk.Button(bf, text="Iptal", bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        tk.Button(bf, text=t("iptal"), bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def _kayit_durum_degistir(self):
         secim = self.tree.selection()
@@ -410,7 +411,7 @@ class AsistanGUI:
 
     def _form_alan_ekle(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Yeni Alan"); dialog.geometry("520x480"); dialog.configure(bg=BG)
+        dialog.title(t("form_yeni_alan")); dialog.geometry("520x480"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
@@ -439,7 +440,7 @@ class AsistanGUI:
             if form_manager.alan_ekle(ad, etiket, tip_var.get(), zorunlu_var.get()):
                 dialog.destroy(); self._refresh_form_alanlar()
         tk.Button(bf, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=kaydet).pack(side=tk.LEFT, padx=5)
-        tk.Button(bf, text="Iptal", bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        tk.Button(bf, text=t("iptal"), bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def _form_alan_sil(self):
         secim = self.form_tree.selection()
@@ -498,7 +499,7 @@ class AsistanGUI:
         s3 = tk.Frame(ayar_frame, bg=BG); s3.pack(fill=tk.X, pady=5)
         tk.Button(s3, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._uyari_ayarlari_kaydet).pack(side=tk.LEFT, padx=5)
         tk.Button(s3, text="Mail Ayarlari", bg=FG2, fg='white', font=('Segoe UI', 9), relief=tk.FLAT, padx=10, command=self._mail_ayarlari).pack(side=tk.LEFT, padx=5)
-        tk.Button(s3, text="Test", bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=10, command=self._test_uyari).pack(side=tk.LEFT, padx=5)
+        tk.Button(s3, text=t("uyari_test"), bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=10, command=self._test_uyari).pack(side=tk.LEFT, padx=5)
 
         btn_frame = tk.Frame(page, bg=BG, pady=5); btn_frame.pack(fill=tk.X, padx=10)
         tk.Button(btn_frame, text="Manuel Uyari", bg=MAGENTA, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._manuel_uyari_ekle).pack(side=tk.LEFT, padx=5)
@@ -540,7 +541,7 @@ class AsistanGUI:
 
     def _test_uyari(self):
         alert_manager.bildirim_gonder({'id':0,'musteri_ad':'TEST','uyari_tarihi':datetime.now().strftime('%d.%m.%Y'),'aciklama':'Test','kanallar':'bilgisayar'})
-        messagebox.showinfo("Test", "Test uyari gonderildi!")
+        messagebox.showinfo(t("uyari_test"), "Test uyari gonderildi!")
 
     def _manuel_uyari_ekle(self):
         dialog = tk.Toplevel(self.root)
@@ -557,7 +558,7 @@ class AsistanGUI:
         tk.Label(dialog, text="Tarih (GG.AA.YYYY):", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         tarih_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         tarih_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4); tarih_entry.insert(0, datetime.now().strftime('%d.%m.%Y'))
-        tk.Label(dialog, text="Aciklama:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text=t("hesap_geri_aciklama") + ":", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         aciklama_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         aciklama_entry.pack(fill=tk.X, padx=20, pady=(0,10), ipady=4)
         def kaydet():
@@ -567,7 +568,7 @@ class AsistanGUI:
                 dialog.destroy(); self._refresh_uyarilar()
         bf = tk.Frame(dialog, bg=BG); bf.pack(pady=5)
         tk.Button(bf, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=kaydet).pack(side=tk.LEFT, padx=5)
-        tk.Button(bf, text="Iptal", bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        tk.Button(bf, text=t("iptal"), bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def _uyari_sil(self):
         secim = self.uyari_tree.selection()
@@ -648,7 +649,7 @@ class AsistanGUI:
 
     def _gorev_ekle(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Yeni Gorev"); dialog.geometry("600x450"); dialog.configure(bg=BG)
+        dialog.title(t("gorev_yeni")); dialog.geometry("600x450"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
@@ -658,7 +659,7 @@ class AsistanGUI:
         tk.Label(dialog, text="Gorev Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         ad_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4)
-        tk.Label(dialog, text="Aciklama:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text=t("hesap_geri_aciklama") + ":", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         aciklama_text = tk.Text(dialog, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, height=4)
         aciklama_text.pack(fill=tk.X, padx=20, pady=(0,8))
         tk.Label(dialog, text="Talimat (AI ne yapacak):", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
@@ -676,7 +677,7 @@ class AsistanGUI:
             if gorev_id > 0: dialog.destroy(); self._refresh_gorevler()
         bf = tk.Frame(dialog, bg=BG); bf.pack(pady=5)
         tk.Button(bf, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=kaydet).pack(side=tk.LEFT, padx=5)
-        tk.Button(bf, text="Iptal", bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        tk.Button(bf, text=t("iptal"), bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def _gorev_sil(self):
         secim = self.gorev_tree.selection()
@@ -705,7 +706,7 @@ class AsistanGUI:
         tk.Label(dialog, text="Gorev Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         ad_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4); ad_entry.insert(0, gorev.get('gorev_adi',''))
-        tk.Label(dialog, text="Aciklama:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text=t("hesap_geri_aciklama") + ":", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         aciklama_text = tk.Text(dialog, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, height=4)
         aciklama_text.pack(fill=tk.X, padx=20, pady=(0,8)); aciklama_text.insert('1.0', gorev.get('aciklama',''))
         tk.Label(dialog, text="Talimat:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
@@ -721,7 +722,7 @@ class AsistanGUI:
             dialog.destroy(); self._refresh_gorevler()
         bf = tk.Frame(dialog, bg=BG); bf.pack(pady=5)
         tk.Button(bf, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=kaydet).pack(side=tk.LEFT, padx=5)
-        tk.Button(bf, text="Iptal", bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        tk.Button(bf, text=t("iptal"), bg=RED, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def _gorev_durum_degistir(self):
         secim = self.gorev_tree.selection()
@@ -791,7 +792,7 @@ class AsistanGUI:
     # ═══════════════════════════════════════════
     def _create_hesap_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['hesap'] = page
-        self._create_header(page, "Hesap")
+        self._create_header(page, t("menu_hesap"))
 
         # 2 sutunlu icerik
         icerik = tk.Frame(page, bg=BG)
@@ -832,7 +833,7 @@ class AsistanGUI:
         self.giris_sifre.pack(fill=tk.X, ipady=5, pady=(2,8))
         giris_btn_frame = tk.Frame(self.giris_frame, bg=BG)
         giris_btn_frame.pack(fill=tk.X)
-        tk.Button(giris_btn_frame, text="Giris Yap", bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._giris_yap).pack(side=tk.LEFT, padx=(0,5))
+        tk.Button(giris_btn_frame, text=t("hesap_giris"), bg=GREEN, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._giris_yap).pack(side=tk.LEFT, padx=(0,5))
         tk.Button(giris_btn_frame, text="Google ile", bg='#ea4335', fg='white', font=('Segoe UI', 9), relief=tk.FLAT, padx=12, command=self._google_oauth).pack(side=tk.LEFT, padx=2)
         tk.Button(giris_btn_frame, text="GitHub ile", bg='#24292e', fg='white', font=('Segoe UI', 9), relief=tk.FLAT, padx=12, command=self._github_oauth).pack(side=tk.LEFT, padx=2)
 
@@ -866,7 +867,7 @@ class AsistanGUI:
         tk.Label(self.kayit_frame, text="Sifre:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
         self.kayit_sifre = tk.Entry(self.kayit_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, show='*')
         self.kayit_sifre.pack(fill=tk.X, ipady=4, pady=(2,8))
-        tk.Button(self.kayit_frame, text="Hesap Olustur", bg=MAGENTA, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._hesap_olustur).pack(anchor=tk.W)
+        tk.Button(self.kayit_frame, text=t("hesap_olustur"), bg=MAGENTA, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._hesap_olustur).pack(anchor=tk.W)
 
         # 2FA - sag sutunda
         self.totp_frame = tk.LabelFrame(sag, text="  Iki Adimli Dogrulama (2FA)  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=YELLOW, padx=15, pady=12)
@@ -885,26 +886,26 @@ class AsistanGUI:
 
         tur_frame = tk.Frame(geri_frame, bg=BG)
         tur_frame.pack(fill=tk.X, pady=(0,8))
-        tk.Label(tur_frame, text="Tur:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
+        tk.Label(tur_frame, text=t("hesap_geri_tur") + ":", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
         self.geri_tur_var = tk.StringVar(value='hata')
         tk.Radiobutton(tur_frame, text="Hata", variable=self.geri_tur_var, value='hata',
                        font=('Segoe UI', 9), bg=BG, fg=RED, selectcolor=BG2).pack(side=tk.LEFT, padx=(10,0))
         tk.Radiobutton(tur_frame, text="Oneri", variable=self.geri_tur_var, value='oneri',
                        font=('Segoe UI', 9), bg=BG, fg=GREEN, selectcolor=BG2).pack(side=tk.LEFT, padx=10)
 
-        tk.Label(geri_frame, text="Baslik:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
+        tk.Label(geri_frame, text=t("hesap_geri_baslik") + ":", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
         self.geri_baslik_entry = tk.Entry(geri_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT)
         self.geri_baslik_entry.pack(fill=tk.X, ipady=4, pady=(2,6))
 
-        tk.Label(geri_frame, text="Aciklama:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
+        tk.Label(geri_frame, text=t("hesap_geri_aciklama") + ":", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
         self.geri_aciklama_text = tk.Text(geri_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, height=4)
         self.geri_aciklama_text.pack(fill=tk.X, pady=(2,8))
 
-        tk.Button(geri_frame, text="Gonder", bg=CYAN, fg='white', font=('Segoe UI', 10, 'bold'),
+        tk.Button(geri_frame, text=t("gonder"), bg=CYAN, fg='white', font=('Segoe UI', 10, 'bold'),
                  relief=tk.FLAT, padx=20, command=self._geri_bildirim_gonder).pack(anchor=tk.W)
 
         # Cikis - sag sutunda
-        self.cikis_btn = tk.Button(sag, text="Cikis Yap", bg=RED, fg='white', font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, pady=8, command=self._cikis_yap)
+        self.cikis_btn = tk.Button(sag, text=t("hesap_cikis"), bg=RED, fg='white', font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, pady=8, command=self._cikis_yap)
         self.cikis_btn.pack(anchor=tk.W, pady=(5,0))
 
     def _refresh_hesap(self):
@@ -1200,7 +1201,7 @@ class AsistanGUI:
     # ═══════════════════════════════════════════
     def _create_ayarlar_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['ayarlar'] = page
-        self._create_header(page, "Ayarlar")
+        self._create_header(page, t("menu_ayarlar"))
 
         # Scrollable
         canvas = tk.Canvas(page, bg=BG, highlightthickness=0)
@@ -1216,6 +1217,23 @@ class AsistanGUI:
         form.pack(fill=tk.BOTH, expand=True)
 
         # ─── AI SEVIYE KARTLARI (Yan yana kolonlar) ───
+        # Dil Secimi
+        dil_frame = tk.LabelFrame(form, text="  Dil Secimi / Language  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=10)
+        dil_frame.pack(fill=tk.X, pady=(0,10))
+
+        dil_row = tk.Frame(dil_frame, bg=BG)
+        dil_row.pack(fill=tk.X)
+
+        self.dil_var = tk.StringVar(value=dil_getir())
+
+        tk.Radiobutton(dil_row, text="Turkce", variable=self.dil_var, value='tr',
+                       font=('Segoe UI', 11), bg=BG, fg=FG, selectcolor=BG2,
+                       command=lambda: self._dil_degistir('tr')).pack(side=tk.LEFT, padx=(0,20))
+
+        tk.Radiobutton(dil_row, text="English", variable=self.dil_var, value='en',
+                       font=('Segoe UI', 11), bg=BG, fg=FG, selectcolor=BG2,
+                       command=lambda: self._dil_degistir('en')).pack(side=tk.LEFT)
+
         ai_frame = tk.LabelFrame(form, text="  Yapay Zeka Seviyesi  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=ACCENT, padx=10, pady=10)
         ai_frame.pack(fill=tk.X, pady=(0,10))
 
@@ -1320,19 +1338,19 @@ class AsistanGUI:
         guncelleme_btn_frame = tk.Frame(update_frame, bg=BG)
         guncelleme_btn_frame.pack(fill=tk.X, pady=(10,0))
 
-        tk.Button(guncelleme_btn_frame, text="Guncelleme Kontrol Et", bg=CYAN, fg='white',
+        tk.Button(guncelleme_btn_frame, text=t("update_kontrol_et"), bg=CYAN, fg='white',
                  font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelleme_kontrol).pack(side=tk.LEFT, padx=(0,5))
 
-        self.indir_btn = tk.Button(guncelleme_btn_frame, text="Indir", bg=ACCENT, fg='white',
+        self.indir_btn = tk.Button(guncelleme_btn_frame, text=t("update_indir"), bg=ACCENT, fg='white',
                  font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelleme_indir, state=tk.DISABLED)
         self.indir_btn.pack(side=tk.LEFT, padx=5)
 
-        self.guncelle_btn = tk.Button(guncelleme_btn_frame, text="Guncelle ve Yeniden Baslat", bg=GREEN, fg='white',
+        self.guncelle_btn = tk.Button(guncelleme_btn_frame, text=t("update_guncelle"), bg=GREEN, fg='white',
                  font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=15, command=self._guncelle_ve_baslat, state=tk.DISABLED)
         self.guncelle_btn.pack(side=tk.LEFT, padx=5)
 
         # Kaydet
-        tk.Button(form, text="  AYARLARI KAYDET  ", bg=GREEN, fg='white',
+        tk.Button(form, text="  " + t("ayarlar_kaydet") + "  ", bg=GREEN, fg='white',
                  font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, padx=30, pady=10,
                  command=self._save_settings).pack(anchor=tk.W, pady=(10,0))
 
@@ -1475,6 +1493,14 @@ class AsistanGUI:
             winreg.CloseKey(key); return True
         except Exception as e:
             logger.error(f"Autostart: {e}"); return False
+
+    def _dil_degistir(self, dil_kodu):
+        dil_ayarla(dil_kodu)
+        msg = "Dil degistirildi. Program yeniden baslatilacak." if dil_kodu == 'tr' else "Language changed. Program will restart."
+        messagebox.showinfo("OK", msg)
+        import subprocess
+        subprocess.Popen([sys.executable] + sys.argv[1:])
+        self.root.after(500, self.root.destroy)
 
     def _save_settings(self):
         yeni_seviye = self.ai_seviye_var.get()
