@@ -70,6 +70,7 @@ class AsistanGUI:
         alert_manager.baslat()
         update_manager.kontrol_dongusu_baslat()
         self._create_widgets()
+        self._tema_stil_uygula()
         self._update_status()
 
     def _create_widgets(self):
@@ -1402,13 +1403,15 @@ class AsistanGUI:
         renk_row = tk.Frame(renk_frame, bg=BG)
         renk_row.pack(anchor=tk.W)
 
+        # 5'erli grid - satir dolunca alt satira gecer
         self._renk_kutulari = {}
-        for _anahtar, _hex in RENKLER.items():
+        for _i, (_anahtar, _hex) in enumerate(RENKLER.items()):
             _secili = (_anahtar == getattr(self, '_renk_aktif_anahtar', 'beyaz'))
             _kutu = tk.Frame(renk_row, bg=_hex, width=26, height=26,
                              highlightthickness=3 if _secili else 2,
                              highlightbackground=self._ters_renk(_hex), cursor='hand2')
-            _kutu.pack(side=tk.LEFT, padx=5, pady=5)
+            _satir, _sutun = divmod(_i, 5)
+            _kutu.grid(row=_satir, column=_sutun, padx=5, pady=5, sticky='w')
             _kutu.pack_propagate(False)
             _kutu.bind('<Button-1>', lambda e, k=_anahtar: self._renk_sec(k))
             self._renk_kutulari[_anahtar] = _kutu
@@ -1680,8 +1683,12 @@ class AsistanGUI:
         self._renk_aktif_palet = dict(yeni_palet)
         if eslesme:
             self._widget_renk_yaz(self.root, eslesme)
+        self._tema_stil_uygula()
 
     def _widget_renk_yaz(self, w, eslesme):
+        # Renk secici kutulari asla degismez - renkleri sabittir
+        if w in getattr(self, '_renk_kutulari', {}).values():
+            return
         for opt in ('bg', 'fg', 'highlightbackground', 'highlightcolor'):
             try:
                 d = w.cget(opt)
@@ -1692,6 +1699,56 @@ class AsistanGUI:
         try:
             for child in w.winfo_children():
                 self._widget_renk_yaz(child, eslesme)
+        except Exception:
+            pass
+
+    def _tema_stil_uygula(self):
+        """Tema rengine gore ttk stilleri, imlec ve okunabilirlik ayarlari"""
+        # ttk widget'lari: Treeview (kayitlar tablosu), Scrollbar, Progressbar
+        try:
+            st = ttk.Style(self.root)
+            try:
+                st.theme_use('clam')
+            except Exception:
+                pass
+            st.configure('Treeview',
+                         background=BG2, fieldbackground=BG, foreground=FG,
+                         bordercolor=BORDER, insertcolor=FG)
+            st.configure('Treeview.Heading',
+                         background=BG3, foreground=FG, relief='flat',
+                         bordercolor=BORDER)
+            st.map('Treeview',
+                   background=[('selected', ACCENT)],
+                   foreground=[('selected', 'white')])
+            st.map('Treeview.Heading',
+                   background=[('active', ACCENT)],
+                   foreground=[('active', 'white')])
+            st.configure('TProgressbar',
+                         background=ACCENT, troughcolor=BG3,
+                         bordercolor=BORDER, lightcolor=ACCENT, darkcolor=ACCENT)
+            st.configure('TScrollbar',
+                         background=BG3, troughcolor=BG2,
+                         arrowcolor=FG, bordercolor=BORDER)
+            st.map('TScrollbar',
+                   background=[('active', ACCENT)],
+                   arrowcolor=[('active', FG)])
+        except Exception:
+            pass
+
+        # Imlec rengi - koyu temada siyah imlec gorunmez
+        def _imlec(w):
+            try:
+                if isinstance(w, (tk.Entry, tk.Text, tk.Spinbox)):
+                    w.config(insertbackground=FG)
+            except Exception:
+                pass
+            try:
+                for ch in w.winfo_children():
+                    _imlec(ch)
+            except Exception:
+                pass
+        try:
+            _imlec(self.root)
         except Exception:
             pass
 
