@@ -75,7 +75,7 @@ class AsistanGUI:
         self.tum_menu_ogeleri = [
             (t("menu_sohbet"), CYAN, True),
             (t("menu_kayitlar"), MAGENTA, True),
-            ("Form Ayarlari", YELLOW, True),
+            ("Form Ayarları", YELLOW, True),
             ("Uyarilar", RED, True),
             ("Gorevler", MAGENTA, None),  # None = seviye bagimli
             ("Telegram", GREEN, True),
@@ -130,7 +130,7 @@ class AsistanGUI:
             self.menu_buttons[text] = {'widget': btn, 'color': color}
 
     def _switch_page(self, page_name):
-        page_map = {t("menu_sohbet"):"sohbet",t("menu_kayitlar"):"kayitlar","Form Ayarlari":"form_ayarlari",
+        page_map = {t("menu_sohbet"):"sohbet",t("menu_kayitlar"):"kayitlar","Form Ayarları":"form_ayarlari",
                     "Uyarilar":"uyarilar","Gorevler":"gorevler","Telegram":"telegram",
                     "Google Drive":"drive",t("menu_hesap"):"hesap",t("menu_ayarlar"):"ayarlar"}
         page_key = page_map.get(page_name, page_name.lower())
@@ -210,7 +210,7 @@ class AsistanGUI:
         alt_frame = tk.Frame(page, bg=BG2, pady=8, highlightbackground=BORDER, highlightthickness=1)
         alt_frame.pack(fill=tk.X, padx=10, pady=(0,10))
         tk.Button(alt_frame, text="🗑️ Sil", bg=RED, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._kayit_sil).pack(side=tk.LEFT, padx=5)
-        tk.Button(alt_frame, text="✏️ Duzenle", bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._kayit_duzenle).pack(side=tk.LEFT, padx=5)
+        tk.Button(alt_frame, text="✏️ Düzenle", bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._kayit_duzenle).pack(side=tk.LEFT, padx=5)
         tk.Button(alt_frame, text="✅ Durum", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._kayit_durum_degistir).pack(side=tk.LEFT, padx=5)
 
         self.kayit_stats = tk.Label(page, text="Toplam: 0", font=('Segoe UI', 9), bg=BG, fg=FG2, pady=3)
@@ -260,7 +260,7 @@ class AsistanGUI:
         kategori_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4)
         kategori_entry.insert(0, values[3])
 
-        tk.Label(dialog, text="Oncelik:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text="Öncelik:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         oncelik_var = tk.StringVar(value=values[4])
         of = tk.Frame(dialog, bg=BG); of.pack(fill=tk.X, padx=20, pady=(0,8))
         for opt in ['normal', 'medium', 'high']:
@@ -322,17 +322,17 @@ class AsistanGUI:
     # ═══════════════════════════════════════════
     def _create_form_ayarlari_page(self):
         page = tk.Frame(self.content, bg=BG); self.pages['form_ayarlari'] = page
-        self._create_header(page, "Form Ayarlari")
+        self._create_header(page, "Form Ayarları")
         info_frame = tk.Frame(page, bg=BG2, padx=15, pady=8, highlightbackground=BORDER, highlightthickness=1)
         info_frame.pack(fill=tk.X, padx=10, pady=5)
-        self.esas_label = tk.Label(info_frame, text="Esas Kayit Basligi: -", font=('Segoe UI', 10, 'bold'), bg=BG2, fg=MAGENTA)
+        self.esas_label = tk.Label(info_frame, text="Esas Kayıt Başlığı: -", font=('Segoe UI', 10, 'bold'), bg=BG2, fg=MAGENTA)
         self.esas_label.pack(anchor=tk.W)
 
         btn_frame = tk.Frame(page, bg=BG, pady=5); btn_frame.pack(fill=tk.X, padx=10)
         tk.Button(btn_frame, text="➕ Yeni Alan", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._form_alan_ekle).pack(side=tk.LEFT, padx=4)
-        tk.Button(btn_frame, text="👑 Esas Sec", bg=MAGENTA, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._form_esas_sec).pack(side=tk.LEFT, padx=4)
-        tk.Button(btn_frame, text="Excel Disa", bg=ACCENT, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._form_excel_disa).pack(side=tk.LEFT, padx=4)
-        tk.Button(btn_frame, text="Excel Iceri", bg=CYAN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._form_excel_iceri).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="👑 Esas Seç", bg=MAGENTA, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._form_esas_sec).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="Excel Dışa Aktar", bg=ACCENT, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._form_excel_disa).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="Excel İçeri Aktar", bg=CYAN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._form_excel_iceri).pack(side=tk.LEFT, padx=4)
 
         list_frame = tk.Frame(page, bg=BG); list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         columns = ('sira','etiket','ad','tip','zorunlu','esas')
@@ -472,15 +472,15 @@ class AsistanGUI:
         self._create_header(page, "Uyarilar (Otomatik)")
         info = tk.Frame(page, bg=BG2, padx=15, pady=8, highlightbackground=BORDER, highlightthickness=1)
         info.pack(fill=tk.X, padx=10, pady=5)
-        tk.Label(info, text="Her musteri kaydinda tarih alanindan otomatik uyari olusturulur.", font=('Segoe UI', 9), bg=BG2, fg=FG2).pack(anchor=tk.W)
-        self.uyari_stats_label = tk.Label(info, text="Uyarilar: 0", font=('Segoe UI', 10, 'bold'), bg=BG2, fg=RED)
+        tk.Label(info, text="Her müşteri kaydında tarih alanından otomatik uyarı oluşturulur.", font=('Segoe UI', 9), bg=BG2, fg=FG2).pack(anchor=tk.W)
+        self.uyari_stats_label = tk.Label(info, text="Uyarılar: 0", font=('Segoe UI', 10, 'bold'), bg=BG2, fg=RED)
         self.uyari_stats_label.pack(anchor=tk.W, pady=(5,0))
 
         ayar_frame = tk.LabelFrame(page, text="  Ayarlar  ", font=('Segoe UI', 10, 'bold'), bg=BG, fg=RED, padx=10, pady=8)
         ayar_frame.pack(fill=tk.X, padx=10, pady=5)
 
         s1 = tk.Frame(ayar_frame, bg=BG); s1.pack(fill=tk.X, pady=2)
-        tk.Label(s1, text="Kac gun once uyari:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
+        tk.Label(s1, text="Kaç gün önce uyarı:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
         self.gun_once_entry = tk.Entry(s1, font=('Segoe UI', 10), width=5, bg=BG2, fg=FG, relief=tk.FLAT)
         self.gun_once_entry.pack(side=tk.LEFT, padx=5); self.gun_once_entry.insert(0, alert_manager.ayar_get('gun_once'))
         tk.Label(s1, text="Yil sonrasi:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT, padx=(20,0))
@@ -498,11 +498,11 @@ class AsistanGUI:
 
         s3 = tk.Frame(ayar_frame, bg=BG); s3.pack(fill=tk.X, pady=5)
         tk.Button(s3, text="Kaydet", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._uyari_ayarlari_kaydet).pack(side=tk.LEFT, padx=5)
-        tk.Button(s3, text="Mail Ayarlari", bg=FG2, fg='white', font=('Segoe UI', 9), relief=tk.FLAT, padx=10, command=self._mail_ayarlari).pack(side=tk.LEFT, padx=5)
+        tk.Button(s3, text="Mail Ayarları", bg=FG2, fg='white', font=('Segoe UI', 9), relief=tk.FLAT, padx=10, command=self._mail_ayarlari).pack(side=tk.LEFT, padx=5)
         tk.Button(s3, text=t("uyari_test"), bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=10, command=self._test_uyari).pack(side=tk.LEFT, padx=5)
 
         btn_frame = tk.Frame(page, bg=BG, pady=5); btn_frame.pack(fill=tk.X, padx=10)
-        tk.Button(btn_frame, text="Manuel Uyari", bg=MAGENTA, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._manuel_uyari_ekle).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Manuel Uyarı", bg=MAGENTA, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._manuel_uyari_ekle).pack(side=tk.LEFT, padx=5)
 
         list_frame = tk.Frame(page, bg=BG); list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         columns = ('id','musteri','tarih','aciklama','kanallar','durum')
@@ -521,7 +521,7 @@ class AsistanGUI:
     def _refresh_uyarilar(self):
         for item in self.uyari_tree.get_children(): self.uyari_tree.delete(item)
         for u in alert_manager.tum_uyarilar(limit=100):
-            durum = "Gonderildi" if u.get('gonderildi') else "Bekliyor"
+            durum = "Gönderildi" if u.get('gonderildi') else "Bekliyor"
             self.uyari_tree.insert('', 'end', values=(u.get('id'), u.get('musteri_ad',''), u.get('uyari_tarihi',''), u.get('aciklama',''), u.get('kanallar',''), durum))
         stats = alert_manager.istatistikler()
         self.uyari_stats_label.config(text=f"Toplam: {stats['toplam']} | Bekleyen: {stats['bekleyen']} | 7 gun: {stats['yakin']} | 30 gun: {stats.get('otuz_gun',0)} | Gonderilen: {stats['gonderilen']}")
@@ -545,14 +545,14 @@ class AsistanGUI:
 
     def _manuel_uyari_ekle(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Manuel Uyari"); dialog.geometry("520x350"); dialog.configure(bg=BG)
+        dialog.title("Manuel Uyarı"); dialog.geometry("520x350"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
-        tk.Label(dialog, text="Manuel Uyari", font=('Segoe UI', 13, 'bold'), bg=BG, fg=MAGENTA).pack(pady=(10,8))
-        tk.Label(dialog, text="Musteri Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text="Manuel Uyarı", font=('Segoe UI', 13, 'bold'), bg=BG, fg=MAGENTA).pack(pady=(10,8))
+        tk.Label(dialog, text="Müşteri Adı:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         ad_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4)
         tk.Label(dialog, text="Tarih (GG.AA.YYYY):", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
@@ -579,15 +579,15 @@ class AsistanGUI:
 
     def _mail_ayarlari(self):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Mail Ayarlari"); dialog.geometry("520x400"); dialog.configure(bg=BG)
+        dialog.title("Mail Ayarları"); dialog.geometry("520x400"); dialog.configure(bg=BG)
         dialog.transient(self.root); dialog.grab_set()
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
-        tk.Label(dialog, text="Mail Ayarlari", font=('Segoe UI', 13, 'bold'), bg=BG, fg=CYAN).pack(pady=(10,8))
+        tk.Label(dialog, text="Mail Ayarları", font=('Segoe UI', 13, 'bold'), bg=BG, fg=CYAN).pack(pady=(10,8))
         entries = {}
-        for label_text, anahtar, varsayilan in [("SMTP:",'mail_smtp','smtp.gmail.com'),("Port:",'mail_port','587'),("Gonderen:",'mail_user',''),("Sifre:",'mail_pass',''),("Alici:",'mail_to','')]:
+        for label_text, anahtar, varsayilan in [("SMTP:",'mail_smtp','smtp.gmail.com'),("Port:",'mail_port','587'),("Gonderen:",'mail_user',''),("Şifre:",'mail_pass',''),("Alici:",'mail_to','')]:
             tk.Label(dialog, text=label_text, font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
             entry = tk.Entry(dialog, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, show='*' if 'sifre' in label_text.lower() else '')
             entry.pack(fill=tk.X, padx=20, pady=(0,5), ipady=4)
@@ -607,14 +607,14 @@ class AsistanGUI:
 
         info = tk.Frame(page, bg=BG2, padx=15, pady=8, highlightbackground=BORDER, highlightthickness=1)
         info.pack(fill=tk.X, padx=10, pady=5)
-        tk.Label(info, text="Yapay zekaya verilen gorevlerin kaydi. Orta ve Iyi seviyelerde aktiftir.", font=('Segoe UI', 9), bg=BG2, fg=FG2).pack(anchor=tk.W)
-        self.gorev_stats_label = tk.Label(info, text="Gorevler: 0", font=('Segoe UI', 10, 'bold'), bg=BG2, fg=MAGENTA)
+        tk.Label(info, text="Yapay zekâya verilen görevlerin kaydı. Orta ve İyi seviyelerde aktiftir.", font=('Segoe UI', 9), bg=BG2, fg=FG2).pack(anchor=tk.W)
+        self.gorev_stats_label = tk.Label(info, text="Görevler: 0", font=('Segoe UI', 10, 'bold'), bg=BG2, fg=MAGENTA)
         self.gorev_stats_label.pack(anchor=tk.W, pady=(5,0))
 
         btn_frame = tk.Frame(page, bg=BG, pady=5); btn_frame.pack(fill=tk.X, padx=10)
-        tk.Button(btn_frame, text="➕ Yeni Gorev", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._gorev_ekle).pack(side=tk.LEFT, padx=4)
-        tk.Button(btn_frame, text="📤 Disa Aktar", bg=ACCENT, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._gorev_excel_disa).pack(side=tk.LEFT, padx=4)
-        tk.Button(btn_frame, text="📥 Iceri Aktar", bg=CYAN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._gorev_excel_iceri).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="➕ Yeni Görev", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._gorev_ekle).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="📤 Dışa Aktar", bg=ACCENT, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._gorev_excel_disa).pack(side=tk.LEFT, padx=4)
+        tk.Button(btn_frame, text="📥 İçe Aktar", bg=CYAN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._gorev_excel_iceri).pack(side=tk.LEFT, padx=4)
 
         search_frame = tk.Frame(page, bg=BG2, pady=5, highlightbackground=BORDER, highlightthickness=1)
         search_frame.pack(fill=tk.X)
@@ -636,7 +636,7 @@ class AsistanGUI:
         alt_frame = tk.Frame(page, bg=BG2, pady=8, highlightbackground=BORDER, highlightthickness=1)
         alt_frame.pack(fill=tk.X, padx=10, pady=(0,10))
         tk.Button(alt_frame, text="🗑️ Sil", bg=RED, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._gorev_sil).pack(side=tk.LEFT, padx=5)
-        tk.Button(alt_frame, text="✏️ Duzenle", bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._gorev_duzenle).pack(side=tk.LEFT, padx=5)
+        tk.Button(alt_frame, text="✏️ Düzenle", bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._gorev_duzenle).pack(side=tk.LEFT, padx=5)
         tk.Button(alt_frame, text="🔄 Durum", bg=GREEN, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=15, command=self._gorev_durum_degistir).pack(side=tk.LEFT, padx=5)
         tk.Button(alt_frame, text="🔄 Yenile", bg=FG2, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._refresh_gorevler).pack(side=tk.RIGHT, padx=5)
 
@@ -655,8 +655,8 @@ class AsistanGUI:
         x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
-        tk.Label(dialog, text="➕ Yeni Gorev", font=('Segoe UI', 13, 'bold'), bg=BG, fg=GREEN).pack(pady=(10,8))
-        tk.Label(dialog, text="Gorev Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text="➕ Yeni Görev", font=('Segoe UI', 13, 'bold'), bg=BG, fg=GREEN).pack(pady=(10,8))
+        tk.Label(dialog, text="Görev Adı:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         ad_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4)
         tk.Label(dialog, text=t("hesap_geri_aciklama") + ":", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
@@ -665,7 +665,7 @@ class AsistanGUI:
         tk.Label(dialog, text="Talimat (AI ne yapacak):", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         talimat_text = tk.Text(dialog, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, height=4)
         talimat_text.pack(fill=tk.X, padx=20, pady=(0,8))
-        tk.Label(dialog, text="Oncelik:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text="Öncelik:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         oncelik_var = tk.StringVar(value='normal')
         of = tk.Frame(dialog, bg=BG); of.pack(fill=tk.X, padx=20, pady=(0,8))
         for opt in ['dusuk', 'normal', 'yuksek']:
@@ -703,7 +703,7 @@ class AsistanGUI:
         y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(x,0)}+{max(y,0)}")
         tk.Label(dialog, text=f"Gorev #{gorev_id} Duzenle", font=('Segoe UI', 13, 'bold'), bg=BG, fg=YELLOW).pack(pady=(10,8))
-        tk.Label(dialog, text="Gorev Adi:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
+        tk.Label(dialog, text="Görev Adı:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
         ad_entry = tk.Entry(dialog, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         ad_entry.pack(fill=tk.X, padx=20, pady=(0,8), ipady=4); ad_entry.insert(0, gorev.get('gorev_adi',''))
         tk.Label(dialog, text=t("hesap_geri_aciklama") + ":", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W, padx=20)
@@ -814,7 +814,7 @@ class AsistanGUI:
         # Durum - sag sutunda ustte
         self.hesap_durum_frame = tk.Frame(sag, bg=BG2, padx=15, pady=15, highlightbackground=BORDER, highlightthickness=1)
         self.hesap_durum_frame.pack(fill=tk.X, pady=(0,10))
-        self.hesap_durum_label = tk.Label(self.hesap_durum_frame, text="Giris yapilmadi", font=('Segoe UI', 12, 'bold'), bg=BG2, fg=RED)
+        self.hesap_durum_label = tk.Label(self.hesap_durum_frame, text="Giriş yapılmadı", font=('Segoe UI', 12, 'bold'), bg=BG2, fg=RED)
         self.hesap_durum_label.pack(anchor=tk.W)
         self.hesap_bilgi_label = tk.Label(self.hesap_durum_frame, text="", font=('Segoe UI', 9), bg=BG2, fg=FG2)
         self.hesap_bilgi_label.pack(anchor=tk.W, pady=(3,0))
@@ -828,7 +828,7 @@ class AsistanGUI:
         tk.Label(self.giris_frame, text="E-posta:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W)
         self.giris_email = tk.Entry(self.giris_frame, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT)
         self.giris_email.pack(fill=tk.X, ipady=5, pady=(2,6))
-        tk.Label(self.giris_frame, text="Sifre:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W)
+        tk.Label(self.giris_frame, text="Şifre:", font=('Segoe UI', 10), bg=BG, fg=FG).pack(anchor=tk.W)
         self.giris_sifre = tk.Entry(self.giris_frame, font=('Segoe UI', 11), bg=BG2, fg=FG, relief=tk.FLAT, show='*')
         self.giris_sifre.pack(fill=tk.X, ipady=5, pady=(2,8))
         giris_btn_frame = tk.Frame(self.giris_frame, bg=BG)
@@ -853,7 +853,7 @@ class AsistanGUI:
         self.kayit_soyad = tk.Entry(sutun1, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, width=15)
         self.kayit_soyad.pack(side=tk.LEFT, padx=5, ipady=4)
 
-        tk.Label(sutun2, text="Dogum Tarihi:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
+        tk.Label(sutun2, text="Doğum Tarihi:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
         self.kayit_dogum = tk.Entry(sutun2, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, width=12)
         self.kayit_dogum.pack(side=tk.LEFT, padx=(5,15), ipady=4)
         self.kayit_dogum.insert(0, "GG.AA.YYYY")
@@ -864,7 +864,7 @@ class AsistanGUI:
         tk.Label(self.kayit_frame, text="E-posta:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W, pady=(6,0))
         self.kayit_email = tk.Entry(self.kayit_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT)
         self.kayit_email.pack(fill=tk.X, ipady=4, pady=(2,4))
-        tk.Label(self.kayit_frame, text="Sifre:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
+        tk.Label(self.kayit_frame, text="Şifre:", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
         self.kayit_sifre = tk.Entry(self.kayit_frame, font=('Segoe UI', 10), bg=BG2, fg=FG, relief=tk.FLAT, show='*')
         self.kayit_sifre.pack(fill=tk.X, ipady=4, pady=(2,8))
         tk.Button(self.kayit_frame, text=t("hesap_olustur"), bg=MAGENTA, fg='white', font=('Segoe UI', 10, 'bold'), relief=tk.FLAT, padx=20, command=self._hesap_olustur).pack(anchor=tk.W)
@@ -872,12 +872,12 @@ class AsistanGUI:
         # 2FA - sag sutunda
         self.totp_frame = tk.LabelFrame(sag, text="  Iki Adimli Dogrulama (2FA)  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=YELLOW, padx=15, pady=12)
         self.totp_frame.pack(fill=tk.X, pady=(0,10))
-        self.totp_durum_label = tk.Label(self.totp_frame, text="Kapali", font=('Segoe UI', 10, 'bold'), bg=BG, fg=RED)
+        self.totp_durum_label = tk.Label(self.totp_frame, text="Kapalı", font=('Segoe UI', 10, 'bold'), bg=BG, fg=RED)
         self.totp_durum_label.pack(anchor=tk.W)
         totp_btn_frame = tk.Frame(self.totp_frame, bg=BG)
         totp_btn_frame.pack(fill=tk.X, pady=(8,0))
         tk.Button(totp_btn_frame, text="2FA Aktif Et", bg=YELLOW, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._totp_aktif_et).pack(side=tk.LEFT, padx=(0,5))
-        tk.Button(totp_btn_frame, text="2FA Kaldir", bg=RED, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._totp_kaldir).pack(side=tk.LEFT, padx=5)
+        tk.Button(totp_btn_frame, text="2FA Kaldır", bg=RED, fg='white', font=('Segoe UI', 9, 'bold'), relief=tk.FLAT, padx=12, command=self._totp_kaldir).pack(side=tk.LEFT, padx=5)
         tk.Label(self.totp_frame, text="Google Authenticator ile dogrulama yapin.", font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W, pady=(5,0))
 
         # GERI BILDIRIM
@@ -890,7 +890,7 @@ class AsistanGUI:
         self.geri_tur_var = tk.StringVar(value='hata')
         tk.Radiobutton(tur_frame, text="Hata", variable=self.geri_tur_var, value='hata',
                        font=('Segoe UI', 9), bg=BG, fg=RED, selectcolor=BG2).pack(side=tk.LEFT, padx=(10,0))
-        tk.Radiobutton(tur_frame, text="Oneri", variable=self.geri_tur_var, value='oneri',
+        tk.Radiobutton(tur_frame, text="Öneri", variable=self.geri_tur_var, value='oneri',
                        font=('Segoe UI', 9), bg=BG, fg=GREEN, selectcolor=BG2).pack(side=tk.LEFT, padx=10)
 
         tk.Label(geri_frame, text=t("hesap_geri_baslik") + ":", font=('Segoe UI', 9), bg=BG, fg=FG).pack(anchor=tk.W)
@@ -911,13 +911,13 @@ class AsistanGUI:
     def _refresh_hesap(self):
         if firebase_auth.giris_yapildi_mi():
             bilgi = firebase_auth.kullanici_bilgisi()
-            self.hesap_durum_label.config(text="Giris Yapildi", fg=GREEN)
+            self.hesap_durum_label.config(text="Giriş Yapıldı", fg=GREEN)
             self.hesap_bilgi_label.config(
                 text=f"{bilgi.get('ad','')} {bilgi.get('soyad','')} | {bilgi.get('email','')} | Plan: {bilgi.get('plan','ucretsiz')}")
             self.giris_frame.pack_forget()
             self.kayit_frame.pack_forget()
         else:
-            self.hesap_durum_label.config(text="Giris yapilmadi", fg=RED)
+            self.hesap_durum_label.config(text="Giriş yapılmadı", fg=RED)
             self.hesap_bilgi_label.config(text="Hesap olusturun veya giris yapin")
             self.giris_frame.pack(fill=tk.X, pady=(0,10))
             self.kayit_frame.pack(fill=tk.X, pady=(0,10))
@@ -925,7 +925,7 @@ class AsistanGUI:
         if firebase_auth.totp_durumu():
             self.totp_durum_label.config(text="Aktif", fg=GREEN)
         else:
-            self.totp_durum_label.config(text="Kapali", fg=RED)
+            self.totp_durum_label.config(text="Kapalı", fg=RED)
 
 
     def _giris_yap(self):
@@ -935,7 +935,7 @@ class AsistanGUI:
             messagebox.showerror("Hata", "E-posta ve sifre girin!"); return
         sonuc = firebase_auth.giris_yap(email, sifre)
         if sonuc['success']:
-            messagebox.showinfo("Basarili", "Giris yapildi!")
+            messagebox.showinfo("Başarılı", "Giris yapildi!")
             self._refresh_hesap()
         else:
             messagebox.showerror("Hata", sonuc['error'])
@@ -952,7 +952,7 @@ class AsistanGUI:
         sonuc = firebase_auth.kayit_ol(email, sifre, ad, soyad,
                                        self.kayit_dogum.get().strip(), self.kayit_telefon.get().strip())
         if sonuc['success']:
-            messagebox.showinfo("Basarili", "Hesap olusturuldu! E-posta dogrulama gonderildi.")
+            messagebox.showinfo("Başarılı", "Hesap olusturuldu! E-posta dogrulama gonderildi.")
             self._refresh_hesap()
         else:
             messagebox.showerror("Hata", sonuc['error'])
@@ -1004,7 +1004,7 @@ class AsistanGUI:
 
         def dogrula():
             if firebase_auth.totp_dogrula(kod_entry.get().strip()):
-                messagebox.showinfo("Basarili", "2FA aktif edildi!", parent=dialog)
+                messagebox.showinfo("Başarılı", "2FA aktif edildi!", parent=dialog)
                 dialog.destroy()
                 self._refresh_hesap()
             else:
@@ -1053,7 +1053,7 @@ class AsistanGUI:
                 n.show()
             except: pass
 
-            messagebox.showinfo("Gonderildi", tur_adi + " geri bildiriminiz kaydedildi!")
+            messagebox.showinfo("Gönderildi", tur_adi + " geri bildiriminiz kaydedildi!")
             self.geri_baslik_entry.delete(0, tk.END)
             self.geri_aciklama_text.delete('1.0', tk.END)
 
@@ -1094,7 +1094,7 @@ class AsistanGUI:
         durum_frame = tk.LabelFrame(page, text="  Baglanti Durumu  ", font=('Segoe UI', 10, 'bold'), bg=BG, fg=ACCENT, padx=15, pady=10)
         durum_frame.pack(fill=tk.X, padx=10, pady=5)
 
-        self.drive_durum_label = tk.Label(durum_frame, text="Bagli degil", font=('Segoe UI', 11, 'bold'), bg=BG, fg=RED)
+        self.drive_durum_label = tk.Label(durum_frame, text="Bağlı değil", font=('Segoe UI', 11, 'bold'), bg=BG, fg=RED)
         self.drive_durum_label.pack(anchor=tk.W)
         self.drive_son_yedek = tk.Label(durum_frame, text="Son yedekleme: Hicbir zaman", font=('Segoe UI', 9), bg=BG, fg=FG2)
         self.drive_son_yedek.pack(anchor=tk.W, pady=(5,0))
@@ -1128,7 +1128,7 @@ class AsistanGUI:
         tk.Checkbutton(ayar_frame, text="Otomatik yedekleme aktif", variable=self.auto_sync_var, font=('Segoe UI', 10), bg=BG, fg=GREEN, selectcolor=BG2).pack(anchor=tk.W, pady=(10,0))
 
         interval_frame = tk.Frame(ayar_frame, bg=BG); interval_frame.pack(fill=tk.X, pady=(10,0))
-        tk.Label(interval_frame, text="Yedekleme araligi (dakika):", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
+        tk.Label(interval_frame, text="Yedekleme aralığı (dakika):", font=('Segoe UI', 9), bg=BG, fg=FG).pack(side=tk.LEFT)
         self.interval_spin = tk.Spinbox(interval_frame, from_=1, to=1440, font=('Segoe UI', 10), width=5, relief=tk.FLAT)
         self.interval_spin.pack(side=tk.LEFT, padx=5)
         self.interval_spin.delete(0, tk.END); self.interval_spin.insert(0, str(drive_sync.sync_interval // 60))
@@ -1168,7 +1168,7 @@ class AsistanGUI:
         if status['connected']:
             self.drive_durum_label.config(text="Bagli ✓", fg=GREEN)
         else:
-            self.drive_durum_label.config(text="Bagli degil", fg=RED)
+            self.drive_durum_label.config(text="Bağlı değil", fg=RED)
         self.drive_son_yedek.config(text=f"Son yedekleme: {status['last_sync']}")
 
     def _drive_ayar_kaydet(self):
@@ -1216,9 +1216,19 @@ class AsistanGUI:
         form = tk.Frame(scroll_frame, bg=BG, padx=20, pady=15)
         form.pack(fill=tk.BOTH, expand=True)
 
-        # ─── AI SEVIYE KARTLARI (Yan yana kolonlar) ───
-        # Dil Secimi
-        dil_frame = tk.LabelFrame(form, text="  Dil Secimi / Language  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=10)
+        # ─── 2 KOLON: Sol = AI, Sag = Dil + Baslangic ───
+        kolonlar = tk.Frame(form, bg=BG)
+        kolonlar.pack(fill=tk.BOTH, expand=True, pady=(0,10))
+
+        sol = tk.Frame(kolonlar, bg=BG)
+        sol.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0,10))
+
+        sag = tk.Frame(kolonlar, bg=BG, width=340)
+        sag.pack(side=tk.RIGHT, fill=tk.Y, padx=(10,0))
+        sag.pack_propagate(False)
+
+        # SAG KOLON: Dil Secimi
+        dil_frame = tk.LabelFrame(sag, text="  Dil Secimi / Language  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=10)
         dil_frame.pack(fill=tk.X, pady=(0,10))
 
         dil_row = tk.Frame(dil_frame, bg=BG)
@@ -1234,7 +1244,8 @@ class AsistanGUI:
                        font=('Segoe UI', 11), bg=BG, fg=FG, selectcolor=BG2,
                        command=lambda: self._dil_degistir('en')).pack(side=tk.LEFT)
 
-        ai_frame = tk.LabelFrame(form, text="  Yapay Zeka Seviyesi  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=ACCENT, padx=10, pady=10)
+        # SOL KOLON: AI
+        ai_frame = tk.LabelFrame(sol, text="  Yapay Zeka Seviyesi  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=ACCENT, padx=10, pady=10)
         ai_frame.pack(fill=tk.X, pady=(0,10))
 
         kart_frame = tk.Frame(ai_frame, bg=BG)
@@ -1274,7 +1285,7 @@ class AsistanGUI:
                     tk.Button(kart, text="⬇ Indir", font=('Segoe UI', 8), bg=ACCENT, fg='white',
                              relief=tk.FLAT, padx=8, command=lambda k=seviye_key: self._model_indir(k)).pack(anchor=tk.W, pady=(3,0))
             else:
-                tk.Label(kart, text="Hazir", font=('Segoe UI', 8), bg=BG2, fg=GREEN).pack(anchor=tk.W, pady=(3,0))
+                tk.Label(kart, text="Hazır", font=('Segoe UI', 8), bg=BG2, fg=GREEN).pack(anchor=tk.W, pady=(3,0))
 
             self.ai_kartlar[seviye_key] = kart
 
@@ -1290,23 +1301,23 @@ class AsistanGUI:
         self.auto_respond_var = tk.BooleanVar(value=config.auto_respond)
         tk.Checkbutton(ai_frame, text="Otomatik Yanit", variable=self.auto_respond_var, font=('Segoe UI', 10), bg=BG, fg=FG, selectcolor=BG2).pack(anchor=tk.W, pady=(5,0))
 
-        # ─── BASLANGICTA CALISTIR ───
-        startup_frame = tk.LabelFrame(form, text="  Baslangic  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=GREEN, padx=15, pady=15)
+        # ─── BASLANGICTA CALISTIR (sag kolonda) ───
+        startup_frame = tk.LabelFrame(sag, text="  Baslangic  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=GREEN, padx=15, pady=15)
         startup_frame.pack(fill=tk.X, pady=(0,10))
 
         self.autostart_var = tk.BooleanVar(value=self._autostart_durumu())
-        tk.Checkbutton(startup_frame, text="Windows baslangicinda otomatik calistir",
+        tk.Checkbutton(startup_frame, text="Windows başlangıcında otomatik çalıştır",
                        variable=self.autostart_var, font=('Segoe UI', 10), bg=BG, fg=FG, selectcolor=BG2).pack(anchor=tk.W)
         tk.Label(startup_frame, text="Windows acildiginda Asistan otomatik olarak baslar.",
                  font=('Segoe UI', 8), bg=BG, fg=FG2).pack(anchor=tk.W)
 
-        # ─── GUNCELLEME ───
-        update_frame = tk.LabelFrame(form, text="  Guncelleme  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=15)
+        # ─── GUNCELLEME (sag kolonda) ───
+        update_frame = tk.LabelFrame(sag, text="  Guncelleme  ", font=('Segoe UI', 11, 'bold'), bg=BG, fg=CYAN, padx=15, pady=15)
         update_frame.pack(fill=tk.X, pady=(0,10))
 
         surum_row = tk.Frame(update_frame, bg=BG)
         surum_row.pack(fill=tk.X, pady=(0,5))
-        tk.Label(surum_row, text="Mevcut Surum:", font=('Segoe UI', 10), bg=BG, fg=FG2).pack(side=tk.LEFT)
+        tk.Label(surum_row, text="Mevcut Sürüm:", font=('Segoe UI', 10), bg=BG, fg=FG2).pack(side=tk.LEFT)
         self.guncelleme_surum_label = tk.Label(surum_row, text=f"v{update_manager.MEVCUT_SURUM}", font=('Segoe UI', 10, 'bold'), bg=BG, fg=FG)
         self.guncelleme_surum_label.pack(side=tk.LEFT, padx=(6,0))
 
@@ -1316,9 +1327,9 @@ class AsistanGUI:
         self.guncelleme_son_label = tk.Label(kontrol_row, text=update_manager.son_kontrol or 'Hicbir zaman', font=('Segoe UI', 10), bg=BG, fg=FG)
         self.guncelleme_son_label.pack(side=tk.LEFT, padx=(6,0))
 
-        tk.Label(update_frame, text="Her gun sabah 10:00'da otomatik kontrol edilir.", font=('Segoe UI', 9), bg=BG, fg=GREEN).pack(anchor=tk.W, pady=(5,0))
+        tk.Label(update_frame, text="Her gün sabah 10:00'da otomatik kontrol edilir.", font=('Segoe UI', 9), bg=BG, fg=GREEN).pack(anchor=tk.W, pady=(5,0))
 
-        tk.Label(update_frame, text="Bildirim kanallari:", font=('Segoe UI', 9), bg=BG, fg=FG2).pack(anchor=tk.W, pady=(8,0))
+        tk.Label(update_frame, text="Bildirim kanalları:", font=('Segoe UI', 9), bg=BG, fg=FG2).pack(anchor=tk.W, pady=(8,0))
         bildirim_frame = tk.Frame(update_frame, bg=BG)
         bildirim_frame.pack(fill=tk.X, pady=(2,8))
         self.bildirim_telegram = tk.BooleanVar(value=True)
@@ -1379,7 +1390,7 @@ class AsistanGUI:
             messagebox.showinfo("Guncelleme Var!",
                 f"Yeni surum: v{yeni}\nMevcut: v{update_manager.MEVCUT_SURUM}\n\nIndir butonuna basiniz.")
         else:
-            self.guncelleme_durum_label.config(text="Guncel - yeni surum yok", fg=GREEN)
+            self.guncelleme_durum_label.config(text="Güncel - yeni sürüm yok", fg=GREEN)
             self.indir_btn.config(state=tk.DISABLED)
 
     def _guncelleme_indir(self):
@@ -1390,7 +1401,7 @@ class AsistanGUI:
         self.indir_btn.config(state=tk.DISABLED)
         self.indirme_progress.pack(anchor=tk.W, pady=(3,0))
         self.indirme_label.pack(anchor=tk.W)
-        self.indirme_label.config(text="Indiriliyor...", fg=ACCENT)
+        self.indirme_label.config(text="İndiriliyor...", fg=ACCENT)
         self.indirme_progress['value'] = 0
         self.root.update()
 
@@ -1409,11 +1420,11 @@ class AsistanGUI:
     def _indirme_sonuc(self, basarili):
         if basarili:
             self.indirme_progress['value'] = 100
-            self.indirme_label.config(text="Indirme tamamlandi!", fg=GREEN)
+            self.indirme_label.config(text="İndirme tamamlandı!", fg=GREEN)
             self.guncelle_btn.config(state=tk.NORMAL)
             messagebox.showinfo("Tamam", "Guncelleme indirildi!\n\n'Guncelle ve Yeniden Baslat' butonuna basiniz.")
         else:
-            self.indirme_label.config(text="Indirme basarisiz!", fg=RED)
+            self.indirme_label.config(text="İndirme başarısız!", fg=RED)
             self.indir_btn.config(state=tk.NORMAL)
 
     def _guncelle_ve_baslat(self):
@@ -1450,7 +1461,7 @@ class AsistanGUI:
     def _model_indir(self, seviye):
         tanim = AI_SEVIYELER.get(seviye, {})
         if messagebox.askyesno("Model Indir", f"{tanim['ad']} modeli indirilecek (~{tanim['boyut']}).\nDevam edilsin mi?"):
-            self.ai_indirme_label.config(text="Indiriliyor...", fg=YELLOW)
+            self.ai_indirme_label.config(text="İndiriliyor...", fg=YELLOW)
             self.root.update()
 
             def indirme():
@@ -1541,7 +1552,7 @@ class AsistanGUI:
         scard.pack(fill=tk.X, padx=15, pady=2)
 
         self.stats_labels = {}
-        for label, key in [("Toplam Kayit", "kayit"), ("7 Gun Icindeki Uyari", "uyari7"), ("30 Gun Icindeki Uyari", "uyari30"), ("Toplam Uyari", "uyari_toplam")]:
+        for label, key in [("Toplam Kayıt", "kayit"), ("7 Gun Icindeki Uyari", "uyari7"), ("30 Gun Icindeki Uyari", "uyari30"), ("Toplam Uyarı", "uyari_toplam")]:
             row = tk.Frame(scard, bg=BG2); row.pack(fill=tk.X, pady=2)
             tk.Label(row, text=label, font=('Segoe UI', 8), bg=BG2, fg=FG2).pack(side=tk.LEFT)
             val = tk.Label(row, text="0", font=('Segoe UI', 9, 'bold'), bg=BG2, fg=FG); val.pack(side=tk.RIGHT)
@@ -1549,7 +1560,7 @@ class AsistanGUI:
 
         tk.Frame(scard, bg=BORDER, height=1).pack(fill=tk.X, pady=5)
         tk.Label(scard, text="Drive Otomatik Yedekleme", font=('Segoe UI', 8, 'bold'), bg=BG2, fg=FG2).pack(anchor=tk.W, pady=(5,2))
-        self.drive_stats_label = tk.Label(scard, text="Kapali", font=('Segoe UI', 8), bg=BG2, fg=RED)
+        self.drive_stats_label = tk.Label(scard, text="Kapalı", font=('Segoe UI', 8), bg=BG2, fg=RED)
         self.drive_stats_label.pack(anchor=tk.W)
 
     # ═══════════════════════════════════════════
@@ -1616,7 +1627,7 @@ class AsistanGUI:
             if drive_status['connected']:
                 self.drive_stats_label.config(text=f"Acik - Son yedek: {drive_status['last_sync']}", fg=GREEN)
             else:
-                self.drive_stats_label.config(text="Kapali", fg=RED)
+                self.drive_stats_label.config(text="Kapalı", fg=RED)
         except: pass
         self.root.after(10000, self._update_status)
 
