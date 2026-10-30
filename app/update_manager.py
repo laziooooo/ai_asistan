@@ -201,12 +201,20 @@ class UpdateManager:
             hedef_yol = str(hedef_klasor)
             exe_yol = sys.executable if getattr(sys, 'frozen', False) else sys.executable
 
-            # Batch script - once program kapanmasini bekle, sonra kopyala
+            # Batch script - ayarlari yedekle, kopyala, ayarlari geri koy
             batch_icerik = (
                 "@echo off\r\n"
-                "rem Asistan guncelleme baslatildi\r\n"
+                "rem Asistan guncelleme - ayarlar korunur\r\n"
                 "timeout /t 3 /nobreak >nul\r\n"
+                # 1) Mevcut ayarlari yedekle
+                f'if exist "{hedef_yol}\\config.json" copy /Y "{hedef_yol}\\config.json" "{gecici_klasor}_onbellek_config.json" >nul\r\n'
+                f'if exist "{hedef_yol}\\data" xcopy /E /Y /I /Q "{hedef_yol}\\data\\*" "{gecici_klasor}_onbellek_data\\" >nul 2>&1\r\n'
+                # 2) Guncelleme dosyalarini kopyala
                 f'xcopy /E /Y /I /Q "{kaynak_yol}\\*" "{hedef_yol}\\" >nul 2>&1\r\n'
+                # 3) Ayarlari ve veritabanini geri koy
+                f'if exist "{gecici_klasor}_onbellek_config.json" copy /Y "{gecici_klasor}_onbellek_config.json" "{hedef_yol}\\config.json" >nul\r\n'
+                f'if exist "{gecici_klasor}_onbellek_data" xcopy /E /Y /I /Q "{gecici_klasor}_onbellek_data\\*" "{hedef_yol}\\data\\" >nul 2>&1\r\n'
+                # 4) Temizle ve baslat
                 f'del "{self.indirilen_dosya}" >nul 2>&1\r\n'
                 f'rmdir /S /Q "{gecici_klasor}" >nul 2>&1\r\n'
                 f'start "" "{exe_yol}"\r\n'
